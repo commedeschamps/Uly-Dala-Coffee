@@ -1,0 +1,52 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+const path = require('path');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const errorHandler = require('./middleware/errorHandler');
+const AppError = require('./utils/appError');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(morgan('dev'));
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/', authRoutes);
+app.use('/users', userRoutes);
+app.use('/orders', orderRoutes);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.use((req, res, next) => {
+  next(new AppError(`Route not found: ${req.originalUrl}`, 404));
+});
+
+app.use(errorHandler);
+
+const port = process.env.PORT || 4000;
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+startServer();

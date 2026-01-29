@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uly Dala Coffee · Orders</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <div class="ornament-bar" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <nav class="top-nav">
+        <div class="brand">
+          <span class="brand-title">Uly Dala Coffee</span>
+          <span class="brand-subtitle">Kazakh Steppe Coffee Platform</span>
+        </div>
+        <div class="nav-links">
+          <a class="nav-link" href="/">Home</a>
+          <a class="nav-link" href="/auth.html">Account</a>
+          <a class="nav-link is-active" href="/dashboard.html">Orders</a>
+        </div>
+        <div class="nav-actions">
+          <div class="user-badge">
+            <p id="currentUser">Not signed in</p>
+            <p id="currentRole">Role: guest</p>
+          </div>
+          <div class="nav-buttons">
+            <button class="ghost" id="refreshOrders">Refresh Orders</button>
+            <button class="primary" id="logoutBtn">Log out</button>
+          </div>
+        </div>
+      </nav>
+
+      <section class="panel is-active">
+        <div class="panel-header">
+          <h2>Order Command Center</h2>
+          <p>Manage your profile, place orders, and track their status.</p>
+        </div>
+        <div class="grid dashboard-grid">
+          <section class="card">
+            <h2>Profile</h2>
+            <form id="profileForm">
+              <label>
+                Username
+                <input type="text" name="username" minlength="3" />
+              </label>
+              <label>
+                Email
+                <input type="email" name="email" />
+              </label>
+              <button type="submit" class="primary">Update profile</button>
+            </form>
+            <p class="form-message" id="profileMessage"></p>
+          </section>
+
+          <section class="card card--order">
+            <div class="card-header">
+              <h2>New order</h2>
+              <span class="card-subtitle">Compose your custom coffee lineup</span>
+            </div>
+            <form id="orderForm">
+              <div id="itemsContainer"></div>
+              <div class="inline-actions">
+                <button type="button" class="ghost" id="addItemBtn">Add item</button>
+                <label class="inline">
+                  Priority
+                  <input type="checkbox" name="priority" />
+                </label>
+              </div>
+              <label>
+                Notes
+                <textarea name="notes" rows="3" placeholder="Any special requests?"></textarea>
+              </label>
+              <label>
+                Pickup Time
+                <input type="datetime-local" name="pickupTime" />
+              </label>
+              <button type="submit" class="primary">Place order</button>
+            </form>
+            <p class="form-message" id="orderMessage"></p>
+          </section>
+
+          <section class="card card--list">
+            <div class="card-header">
+              <div>
+                <h2>Orders</h2>
+                <p class="card-subtitle">Track every brew in motion</p>
+              </div>
+              <button class="ghost" id="loadOrdersBtn">Load orders</button>
+            </div>
+            <div id="ordersList" class="orders-list"></div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

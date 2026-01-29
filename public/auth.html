@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uly Dala Coffee · Account</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <div class="ornament-bar" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
+      <nav class="top-nav">
+        <div class="brand">
+          <span class="brand-title">Uly Dala Coffee</span>
+          <span class="brand-subtitle">Kazakh Steppe Coffee Platform</span>
+        </div>
+        <div class="nav-links">
+          <a class="nav-link" href="/">Home</a>
+          <a class="nav-link is-active" href="/auth.html">Account</a>
+          <a class="nav-link" href="/dashboard.html">Orders</a>
+        </div>
+        <div class="nav-actions">
+          <div class="user-badge">
+            <p id="currentUser">Not signed in</p>
+            <p id="currentRole">Role: guest</p>
+          </div>
+          <div class="nav-buttons">
+            <button class="ghost" id="refreshOrders">Refresh Orders</button>
+            <button class="primary" id="logoutBtn">Log out</button>
+          </div>
+        </div>
+      </nav>
+
+      <section class="panel is-active">
+        <div class="panel-header">
+          <h2>Account Access</h2>
+          <p>Register or sign in before placing orders.</p>
+        </div>
+        <div class="grid auth-grid">
+          <section class="card">
+            <h2>Create account</h2>
+            <form id="registerForm">
+              <label>
+                Username
+                <input type="text" name="username" required minlength="3" />
+              </label>
+              <label>
+                Email
+                <input type="email" name="email" required />
+              </label>
+              <label>
+                Password
+                <input type="password" name="password" required minlength="8" />
+                <span class="helper">At least 8 characters with a number.</span>
+              </label>
+              <label>
+                Role
+                <select name="role">
+                  <option value="user" selected>User</option>
+                  <option value="premium">Premium User</option>
+                </select>
+              </label>
+              <button type="submit" class="primary">Register</button>
+            </form>
+            <p class="form-message" id="registerMessage"></p>
+          </section>
+
+          <section class="card">
+            <h2>Sign in</h2>
+            <form id="loginForm">
+              <label>
+                Email
+                <input type="email" name="email" required />
+              </label>
+              <label>
+                Password
+                <input type="password" name="password" required />
+              </label>
+              <button type="submit" class="primary">Login</button>
+            </form>
+            <p class="form-message" id="loginMessage"></p>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
