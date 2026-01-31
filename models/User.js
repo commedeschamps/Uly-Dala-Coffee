@@ -40,14 +40,13 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-userSchema.pre('save', async function hashPassword(next) {
+userSchema.pre('save', async function hashPassword() {
   if (!this.isModified('password')) {
-    return next();
+    return;
   }
 
   const saltRounds = 10;
   this.password = await bcrypt.hash(this.password, saltRounds);
-  return next();
 });
 
 userSchema.methods.comparePassword = async function comparePassword(candidate) {

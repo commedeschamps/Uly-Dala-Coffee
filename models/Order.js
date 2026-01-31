@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 const orderItemSchema = new mongoose.Schema(
   {
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+    },
     name: {
       type: String,
       required: true,
@@ -12,9 +16,9 @@ const orderItemSchema = new mongoose.Schema(
       enum: ['small', 'medium', 'large'],
       default: 'medium',
     },
-    price: {
+    unitPrice: {
       type: Number,
-      required: true,
+      required: false,
       min: 0,
     },
     quantity: {
