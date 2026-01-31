@@ -1,9 +1,10 @@
 const { Order } = require('../models/Order');
 const { Product } = require('../models/Product');
+const { sendOrderStatusEmail } = require('../services/emailService');
 const AppError = require('../utils/appError');
 const asyncHandler = require('../utils/asyncHandler');
 
-const staffRoles = ['admin', 'moderator'];
+const staffRoles = ['admin'];
 
 const calculateTotal = (items) => {
   return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
@@ -127,6 +128,7 @@ const updateOrder = asyncHandler(async (req, res) => {
     throw new AppError('Order not found', 404);
   }
 
+  const previousStatus = order.status;
   const isStaff = staffRoles.includes(req.user.role);
   const isPremium = req.user.role === 'premium';
 
@@ -156,13 +158,34 @@ const updateOrder = asyncHandler(async (req, res) => {
   }
 
   if (req.body.status) {
-    if (!isStaff && req.body.status !== 'cancelled') {
-      throw new AppError('Only staff can update order status beyond cancellation', 403);
+    if (!isStaff) {
+      if (req.body.status !== 'cancelled') {
+        throw new AppError('Only admin can update order status', 403);
+      }
+      if (order.status !== 'pending') {
+        throw new AppError('Only pending orders can be cancelled', 400);
+      }
     }
     order.status = req.body.status;
   }
 
   await order.save();
+
+  if (req.body.status && order.status !== previousStatus) {
+    try {
+      await order.populate('user', 'email username');
+      const recipient = order.user?.email;
+      if (recipient) {
+        await sendOrderStatusEmail({
+          to: recipient,
+          name: order.user?.username,
+          order,
+        });
+      }
+    } catch (error) {
+      console.error('[email] Failed to send order status email:', error.message);
+    }
+  }
 
   res.status(200).json({
     status: 'success',
@@ -177,8 +200,11 @@ const deleteOrder = asyncHandler(async (req, res) => {
   }
 
   const isStaff = staffRoles.includes(req.user.role);
+  const isOwner = order.user.toString() === req.user.id;
   if (!isStaff) {
-    throw new AppError('Only admin or moderator can delete orders', 403);
+    if (!isOwner || order.status !== 'pending') {
+      throw new AppError('Only admin or order owner can delete a pending order', 403);
+    }
   }
 
   await order.deleteOne();

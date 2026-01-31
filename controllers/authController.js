@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models/User');
+const { sendWelcomeEmail } = require('../services/emailService');
 const AppError = require('../utils/appError');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -25,6 +26,8 @@ const register = asyncHandler(async (req, res) => {
   });
 
   const token = createToken(user.id);
+
+  await sendWelcomeEmail({ to: user.email, name: user.username });
 
   res.status(201).json({
     status: 'success',

@@ -25,7 +25,7 @@ const createOrderSchema = Joi.object({
 
 const updateOrderSchema = Joi.object({
   items: Joi.array().items(itemSchema).min(1),
-  status: Joi.string().valid('pending', 'paid', 'in_progress', 'ready', 'completed', 'cancelled'),
+  status: Joi.string().valid('pending', 'preparing', 'ready', 'delivered', 'cancelled'),
   notes: Joi.string().max(300).allow(''),
   pickupTime: Joi.date().iso(),
   priority: Joi.boolean(),
