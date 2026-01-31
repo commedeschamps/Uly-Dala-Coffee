@@ -1,11 +1,58 @@
 const { Order } = require('../models/Order');
+const { Product } = require('../models/Product');
 const AppError = require('../utils/appError');
 const asyncHandler = require('../utils/asyncHandler');
 
 const staffRoles = ['admin', 'moderator'];
 
 const calculateTotal = (items) => {
-  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+};
+
+const resolveItems = async (items) => {
+  const productIds = items.map((item) => item.product).filter(Boolean);
+  const products = productIds.length ? await Product.find({ _id: { $in: productIds } }) : [];
+  const productMap = new Map(products.map((product) => [product.id, product]));
+
+  return items.map((item) => {
+    if (item.product) {
+      const product = productMap.get(item.product.toString());
+      if (!product) {
+        throw new AppError('Product not found for one of the items', 400);
+      }
+      if (!product.isAvailable) {
+        throw new AppError(`${product.name} is not available`, 400);
+      }
+
+      let unitPrice = product.basePrice ?? product.price;
+      if (item.size && product.sizes && product.sizes.length) {
+        const matched = product.sizes.find((size) => size.label === item.size);
+        if (!matched) {
+          throw new AppError(`Size ${item.size} not available for ${product.name}`, 400);
+        }
+        unitPrice = matched.price;
+      }
+
+      if (unitPrice === undefined) {
+        throw new AppError(`Price missing for ${product.name}`, 400);
+      }
+
+      return {
+        product: product.id,
+        name: product.name,
+        size: item.size || 'medium',
+        unitPrice,
+        quantity: item.quantity,
+      };
+    }
+
+    return {
+      name: item.name,
+      size: item.size || 'medium',
+      unitPrice: item.unitPrice,
+      quantity: item.quantity,
+    };
+  });
 };
 
 const createOrder = asyncHandler(async (req, res) => {
@@ -18,11 +65,12 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new AppError('Only premium users or staff can set priority orders', 403);
   }
 
-  const total = calculateTotal(items);
+  const resolvedItems = await resolveItems(items);
+  const total = calculateTotal(resolvedItems);
 
   const order = await Order.create({
     user: req.user.id,
-    items,
+    items: resolvedItems,
     notes,
     pickupTime,
     priority: Boolean(priority),
@@ -87,8 +135,9 @@ const updateOrder = asyncHandler(async (req, res) => {
   }
 
   if (req.body.items) {
-    order.items = req.body.items;
-    order.total = calculateTotal(req.body.items);
+    const resolvedItems = await resolveItems(req.body.items);
+    order.items = resolvedItems;
+    order.total = calculateTotal(resolvedItems);
   }
 
   if (req.body.notes !== undefined) {
