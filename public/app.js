@@ -6,10 +6,12 @@ const loginForm = document.getElementById('loginForm');
 const profileForm = document.getElementById('profileForm');
 const orderForm = document.getElementById('orderForm');
 const ordersList = document.getElementById('ordersList');
-const addItemBtn = document.getElementById('addItemBtn');
 const refreshOrdersBtn = document.getElementById('refreshOrders');
 const loadOrdersBtn = document.getElementById('loadOrdersBtn');
 const logoutBtn = document.getElementById('logoutBtn');
+const guestLinks = document.querySelectorAll('[data-auth=\"guest\"]');
+const rootEl = document.documentElement;
+const userBadge = document.querySelector('.user-badge');
 
 const registerMessage = document.getElementById('registerMessage');
 const loginMessage = document.getElementById('loginMessage');
@@ -18,7 +20,11 @@ const orderMessage = document.getElementById('orderMessage');
 const currentUser = document.getElementById('currentUser');
 const currentRole = document.getElementById('currentRole');
 
-const itemsContainer = document.getElementById('itemsContainer');
+const productsList = document.getElementById('productsList');
+const seasonalList = document.getElementById('seasonalList');
+const cartList = document.getElementById('cartList');
+const cartTotal = document.getElementById('cartTotal');
+const clearCartBtn = document.getElementById('clearCartBtn');
 const priorityCheckbox = orderForm ? orderForm.querySelector('input[name=\"priority\"]') : null;
 
 const getToken = () => localStorage.getItem(tokenKey);
@@ -28,6 +34,7 @@ const clearToken = () => localStorage.removeItem(tokenKey);
 const path = window.location.pathname;
 const onDashboard = path.endsWith('dashboard.html');
 const onAuth = path.endsWith('auth.html');
+const onAccount = path.endsWith('account.html');
 
 const redirectTo = (target) => {
   window.location.href = target;
@@ -57,9 +64,16 @@ const fetchJSON = async (url, options = {}) => {
 
 let activeUser = null;
 
-const updateUserUI = (user) => {
+const updateUserUI = (user, options = {}) => {
   activeUser = user;
-  const isLoggedIn = Boolean(user);
+  const isLoggedIn = Boolean(user) || Boolean(options.assumeLoggedIn);
+  const isPending = Boolean(options.assumeLoggedIn) && !user;
+  if (rootEl) {
+    rootEl.classList.toggle('auth-pending', isPending);
+  }
+  if (guestLinks.length) {
+    guestLinks.forEach((link) => link.classList.toggle('is-hidden', isLoggedIn));
+  }
   if (refreshOrdersBtn) {
     refreshOrdersBtn.disabled = !isLoggedIn;
   }
@@ -68,13 +82,21 @@ const updateUserUI = (user) => {
   }
   if (!user) {
     if (currentUser) {
-      currentUser.textContent = 'Not signed in';
+      currentUser.textContent = isPending ? '' : 'Not signed in';
     }
     if (currentRole) {
-      currentRole.textContent = 'Role: guest';
+      currentRole.textContent = isPending ? '' : 'Role: guest';
     }
     if (priorityCheckbox) {
       priorityCheckbox.disabled = true;
+    }
+    if (userBadge) {
+      userBadge.classList.toggle('is-loading', isPending);
+      if (isPending) {
+        userBadge.setAttribute('aria-busy', 'true');
+      } else {
+        userBadge.removeAttribute('aria-busy');
+      }
     }
     return;
   }
@@ -85,82 +107,235 @@ const updateUserUI = (user) => {
   if (currentRole) {
     currentRole.textContent = `Role: ${user.role}`;
   }
+  if (userBadge) {
+    userBadge.classList.remove('is-loading');
+    userBadge.removeAttribute('aria-busy');
+  }
   const canUsePriority = ['premium', 'admin', 'moderator'].includes(user.role);
   if (priorityCheckbox) {
     priorityCheckbox.disabled = !canUsePriority;
   }
 };
 
-const addItemRow = (item = {}) => {
-  if (!itemsContainer) {
-    return;
+const cartKey = 'uly_dala_cart';
+
+const getCart = () => {
+  const raw = localStorage.getItem(cartKey);
+  if (!raw) {
+    return [];
   }
-  const row = document.createElement('div');
-  row.className = 'item-row';
-
-  row.innerHTML = `
-    <label>
-      Item name
-      <input type="text" name="itemName" required value="${item.name || ''}" />
-    </label>
-    <label>
-      Size
-      <select name="itemSize">
-        <option value="small">Small</option>
-        <option value="medium" selected>Medium</option>
-        <option value="large">Large</option>
-      </select>
-    </label>
-    <label>
-      Price
-      <input type="number" name="itemPrice" min="0" step="0.01" required value="${item.price || ''}" />
-    </label>
-    <label>
-      Qty
-      <input type="number" name="itemQty" min="1" step="1" required value="${item.quantity || 1}" />
-    </label>
-    <button type="button" class="ghost remove-item">Remove</button>
-  `;
-
-  row.querySelector('.remove-item').addEventListener('click', () => {
-    row.remove();
-  });
-
-  if (item.size) {
-    row.querySelector('select[name="itemSize"]').value = item.size;
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    return [];
   }
-
-  itemsContainer.appendChild(row);
 };
 
-const collectItems = () => {
-  if (!itemsContainer) {
-    throw new Error('Order items are unavailable on this page.');
+const setCart = (cart) => {
+  localStorage.setItem(cartKey, JSON.stringify(cart));
+  renderCart();
+};
+
+const addToCart = (item) => {
+  const cart = getCart();
+  const existing = cart.find(
+    (entry) => entry.product === item.product && entry.size === item.size
+  );
+  if (existing) {
+    existing.quantity += item.quantity;
+  } else {
+    cart.push(item);
   }
-  const rows = itemsContainer.querySelectorAll('.item-row');
-  const items = [];
+  setCart(cart);
+};
 
-  rows.forEach((row) => {
-    const name = row.querySelector('input[name="itemName"]').value.trim();
-    const size = row.querySelector('select[name="itemSize"]').value;
-    const price = Number(row.querySelector('input[name="itemPrice"]').value);
-    const quantity = Number(row.querySelector('input[name="itemQty"]').value);
+const updateCartQuantity = (index, delta) => {
+  const cart = getCart();
+  if (!cart[index]) {
+    return;
+  }
+  cart[index].quantity += delta;
+  if (cart[index].quantity <= 0) {
+    cart.splice(index, 1);
+  }
+  setCart(cart);
+};
 
-    if (!name) {
-      throw new Error('Each item needs a name.');
-    }
-    if (!price || price < 0) {
-      throw new Error('Item price must be a positive number.');
-    }
+const clearCart = () => {
+  setCart([]);
+};
 
-    items.push({ name, size, price, quantity });
+const formatCurrency = (value) => `${Math.round(value)} ₸`;
+
+const renderCart = () => {
+  if (!cartList || !cartTotal) {
+    return;
+  }
+  const cart = getCart();
+  cartList.innerHTML = '';
+
+  if (!cart.length) {
+    cartList.innerHTML = '<p>Your cart is empty.</p>';
+    cartTotal.textContent = '0 ₸';
+    return;
+  }
+
+  let total = 0;
+
+  cart.forEach((item, index) => {
+    const lineTotal = item.unitPrice * item.quantity;
+    total += lineTotal;
+    const row = document.createElement('div');
+    row.className = 'cart-item';
+    row.innerHTML = `
+      <div class="cart-item-info">
+        <strong>${item.name}</strong>
+        <span>${item.size} · ${formatCurrency(item.unitPrice)} each</span>
+      </div>
+      <div class="cart-item-actions">
+        <button
+          class="qty-action qty-action--dec"
+          type="button"
+          data-index="${index}"
+          data-action="dec"
+          aria-label="Decrease quantity"
+        >
+          <span class="qty-action__text">Remove</span>
+          <span class="qty-action__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <line x1="5" x2="19" y1="12" y2="12"></line>
+            </svg>
+          </span>
+        </button>
+        <span class="cart-qty" aria-label="Quantity">${item.quantity}</span>
+        <button
+          class="qty-action qty-action--inc"
+          type="button"
+          data-index="${index}"
+          data-action="inc"
+          aria-label="Increase quantity"
+        >
+          <span class="qty-action__text">Add item</span>
+          <span class="qty-action__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <line x1="12" x2="12" y1="5" y2="19"></line>
+              <line x1="5" x2="19" y1="12" y2="12"></line>
+            </svg>
+          </span>
+        </button>
+      </div>
+    `;
+    cartList.appendChild(row);
   });
 
-  if (!items.length) {
-    throw new Error('Add at least one item.');
+  cartTotal.textContent = formatCurrency(total);
+};
+
+const renderProductCard = (product, container) => {
+  const card = document.createElement('div');
+  card.className = 'product-card';
+
+  const sizes = product.sizes || [];
+  const hasSizes = sizes.length > 0;
+  const defaultSize = hasSizes ? sizes[0].label : 'medium';
+  const defaultPrice = hasSizes
+    ? sizes[0].price
+    : product.basePrice ?? product.price ?? 0;
+
+  card.innerHTML = `
+    <img src="${product.imageUrl}" alt="${product.name}" loading="lazy" />
+    <div class="product-body">
+      <h4 class="product-title">${product.name}</h4>
+      <p class="product-desc">${product.description || ''}</p>
+      <div class="product-meta">
+        <span class="product-price">${formatCurrency(defaultPrice)}</span>
+        <span>${product.category}</span>
+      </div>
+      ${
+        hasSizes
+          ? `<label>
+              Size
+              <select class="size-select">
+                ${sizes
+                  .map((size) => `<option value="${size.label}">${size.label}</option>`)
+                  .join('')}
+              </select>
+            </label>`
+          : ''
+      }
+      <button class="wooden-cart-button" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <g id="cart">
+            <circle r="1.91" cy="20.59" cx="10.07"></circle>
+            <circle r="1.91" cy="20.59" cx="18.66"></circle>
+            <path d="M.52,1.5H3.18a2.87,2.87,0,0,1,2.74,2L9.11,13.91H8.64A2.39,2.39,0,0,0,6.25,16.3h0a2.39,2.39,0,0,0,2.39,2.38h10"></path>
+            <polyline points="7.21 5.32 22.48 5.32 22.48 7.23 20.57 13.91 9.11 13.91"></polyline>
+          </g>
+        </svg>
+        <span class="button-text">Add to cart</span>
+      </button>
+    </div>
+  `;
+
+  const priceEl = card.querySelector('.product-price');
+  const sizeSelect = card.querySelector('.size-select');
+  if (sizeSelect) {
+    sizeSelect.addEventListener('change', () => {
+      const selected = sizes.find((size) => size.label === sizeSelect.value);
+      if (selected) {
+        priceEl.textContent = formatCurrency(selected.price);
+      }
+    });
   }
 
-  return items;
+  const addBtn = card.querySelector('.wooden-cart-button');
+  addBtn.addEventListener('click', () => {
+    const selectedSize = sizeSelect ? sizeSelect.value : defaultSize;
+    const matched = sizes.find((size) => size.label === selectedSize);
+    const unitPrice = matched ? matched.price : defaultPrice;
+    addToCart({
+      product: product._id,
+      name: product.name,
+      size: selectedSize,
+      unitPrice,
+      quantity: 1,
+    });
+  });
+
+  container.appendChild(card);
+};
+
+const loadProducts = async () => {
+  if (!productsList || !seasonalList) {
+    return;
+  }
+  productsList.innerHTML = '';
+  seasonalList.innerHTML = '';
+
+  try {
+    const data = await fetchJSON(`${apiBase}/products?available=true`);
+    const products = data.products || [];
+    const seasonal = products.filter((product) =>
+      (product.category || '').toLowerCase().includes('seasonal')
+    );
+    const regular = products.filter(
+      (product) => !(product.category || '').toLowerCase().includes('seasonal')
+    );
+
+    if (!regular.length) {
+      productsList.innerHTML = '<p>No products available yet.</p>';
+    } else {
+      regular.forEach((product) => renderProductCard(product, productsList));
+    }
+
+    if (!seasonal.length) {
+      seasonalList.innerHTML = '<p>No seasonal items right now.</p>';
+    } else {
+      seasonal.forEach((product) => renderProductCard(product, seasonalList));
+    }
+  } catch (error) {
+    productsList.innerHTML = `<p>${error.message}</p>`;
+  }
 };
 
 const renderOrders = (orders = []) => {
@@ -188,7 +363,7 @@ const renderOrders = (orders = []) => {
     card.innerHTML = `
       <div class="order-meta">
         <span class="badge">Status: ${order.status}</span>
-        <span>Total: $${order.total.toFixed(2)}</span>
+        <span>Total: ${formatCurrency(order.total)}</span>
         <span>Priority: ${order.priority ? 'Yes' : 'No'}</span>
       </div>
       <div>${items}</div>
@@ -244,7 +419,7 @@ const loadOrders = async () => {
     if (ordersList) {
       ordersList.innerHTML = '<p>Please log in to view orders.</p>';
     }
-    if (onDashboard) {
+    if (onDashboard || onAccount) {
       redirectTo('/auth.html');
     }
     return;
@@ -312,11 +487,13 @@ if (registerForm) {
         registerMessage.textContent = 'Registration successful.';
       }
       registerForm.reset();
-      if (!onDashboard) {
-        redirectTo('/dashboard.html');
+      if (onAuth) {
+        redirectTo('/account.html');
         return;
       }
-      await loadOrders();
+      if (onDashboard) {
+        await loadOrders();
+      }
     } catch (error) {
       if (registerMessage) {
         registerMessage.textContent = error.message;
@@ -345,11 +522,13 @@ if (loginForm) {
         loginMessage.textContent = 'Login successful.';
       }
       loginForm.reset();
-      if (!onDashboard) {
-        redirectTo('/dashboard.html');
+      if (onAuth) {
+        redirectTo('/account.html');
         return;
       }
-      await loadOrders();
+      if (onDashboard) {
+        await loadOrders();
+      }
     } catch (error) {
       if (loginMessage) {
         loginMessage.textContent = error.message;
@@ -369,11 +548,11 @@ if (profileForm) {
       if (profileMessage) {
         profileMessage.textContent = 'Please log in first.';
       }
-      if (onDashboard) {
-        redirectTo('/auth.html');
-      }
-      return;
+    if (onDashboard || onAccount) {
+      redirectTo('/auth.html');
     }
+    return;
+  }
 
     const payload = Object.fromEntries(new FormData(profileForm).entries());
 
@@ -412,7 +591,17 @@ if (orderForm) {
     }
 
     try {
-      const items = collectItems();
+      const cart = getCart();
+      if (!cart.length) {
+        throw new Error('Add items to the cart before placing an order.');
+      }
+
+      const items = cart.map((item) => ({
+        product: item.product,
+        size: item.size,
+        quantity: item.quantity,
+      }));
+
       const formData = new FormData(orderForm);
       const pickupValue = formData.get('pickupTime');
       const payload = {
@@ -431,11 +620,10 @@ if (orderForm) {
         orderMessage.textContent = 'Order placed!';
       }
       orderForm.reset();
-      if (itemsContainer) {
-        itemsContainer.innerHTML = '';
-        addItemRow();
+      clearCart();
+      if (onDashboard) {
+        await loadOrders();
       }
-      await loadOrders();
     } catch (error) {
       if (orderMessage) {
         orderMessage.textContent = error.message;
@@ -444,9 +632,6 @@ if (orderForm) {
   });
 }
 
-if (addItemBtn) {
-  addItemBtn.addEventListener('click', () => addItemRow());
-}
 if (refreshOrdersBtn) {
   refreshOrdersBtn.addEventListener('click', () => {
     if (!onDashboard) {
@@ -466,23 +651,92 @@ if (logoutBtn) {
     if (ordersList) {
       ordersList.innerHTML = '<p>You have logged out.</p>';
     }
-    if (onDashboard) {
+    clearCart();
+    if (onDashboard || onAccount) {
       redirectTo('/auth.html');
     }
   });
 }
 
-const init = async () => {
-  addItemRow();
-  updateUserUI(null);
+if (clearCartBtn) {
+  clearCartBtn.addEventListener('click', clearCart);
+}
 
+if (cartList) {
+  cartList.addEventListener('click', (event) => {
+    const button = event.target.closest('.qty-action');
+    if (!button) {
+      return;
+    }
+    const index = Number(button.dataset.index);
+    const action = button.dataset.action;
+    updateCartQuantity(index, action === 'inc' ? 1 : -1);
+  });
+}
+
+const setupGallerySlider = () => {
+  const slider = document.querySelector('[data-gallery]');
+  if (!slider) {
+    return;
+  }
+  const track = slider.querySelector('.gallery-track');
+  const slides = Array.from(slider.querySelectorAll('.gallery-slide'));
+  const prevBtn = document.querySelector('[data-gallery-prev]');
+  const nextBtn = document.querySelector('[data-gallery-next]');
+  const dots = Array.from(document.querySelectorAll('[data-gallery-dot]'));
+  if (!track || !slides.length) {
+    return;
+  }
+
+  let index = 0;
+
+  const setIndex = (nextIndex) => {
+    index = Math.max(0, Math.min(slides.length - 1, nextIndex));
+    track.style.transform = `translateX(-${index * 100}%)`;
+    dots.forEach((dot, dotIndex) => {
+      const isActive = dotIndex === index;
+      dot.classList.toggle('is-active', isActive);
+      if (isActive) {
+        dot.setAttribute('aria-current', 'true');
+      } else {
+        dot.removeAttribute('aria-current');
+      }
+    });
+    if (prevBtn) {
+      prevBtn.disabled = index === 0;
+    }
+    if (nextBtn) {
+      nextBtn.disabled = index === slides.length - 1;
+    }
+  };
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => setIndex(index - 1));
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => setIndex(index + 1));
+  }
+  dots.forEach((dot) => {
+    dot.addEventListener('click', () => {
+      const targetIndex = Number(dot.dataset.galleryDot || 0);
+      setIndex(targetIndex);
+    });
+  });
+
+  setIndex(0);
+};
+
+const init = async () => {
   const token = getToken();
-  if (!token && onDashboard) {
+  updateUserUI(null, { assumeLoggedIn: Boolean(token) });
+  renderCart();
+
+  if (!token && (onDashboard || onAccount)) {
     redirectTo('/auth.html');
     return;
   }
   if (token && onAuth) {
-    redirectTo('/dashboard.html');
+    redirectTo('/account.html');
     return;
   }
 
@@ -492,12 +746,16 @@ const init = async () => {
       updateUserUI(data.user);
     } catch (error) {
       clearToken();
+      updateUserUI(null);
     }
   }
 
   if (onDashboard) {
+    await loadProducts();
     await loadOrders();
   }
+
+  setupGallerySlider();
 };
 
 init();

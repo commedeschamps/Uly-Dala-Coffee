@@ -7,6 +7,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const productRoutes = require('./routes/productRoutes');
 const errorHandler = require('./middleware/errorHandler');
 const AppError = require('./utils/appError');
 
@@ -19,9 +20,11 @@ app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/products', productRoutes);
 app.use('/', authRoutes);
 app.use('/users', userRoutes);
 app.use('/orders', orderRoutes);
+app.use('/products', productRoutes);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -41,7 +44,7 @@ const startServer = async () => {
   try {
     await connectDB();
     app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
+      console.log(`Server running on http://localhost:${port}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);
