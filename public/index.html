@@ -4,10 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Uly Dala Coffee</title>
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('uly_dala_token')) {
+            document.documentElement.classList.add('auth-pending');
+          }
+        } catch (error) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -20,90 +29,252 @@
         <span></span>
       </div>
 
-      <nav class="top-nav">
-        <div class="brand">
-          <span class="brand-title">Uly Dala Coffee</span>
-          <span class="brand-subtitle">Kazakh Steppe Coffee Platform</span>
-        </div>
-        <div class="nav-links">
-          <a class="nav-link is-active" href="/">Home</a>
-          <a class="nav-link" href="/auth.html">Account</a>
-          <a class="nav-link" href="/dashboard.html">Orders</a>
-        </div>
-        <div class="nav-actions">
-          <div class="user-badge">
-            <p id="currentUser">Not signed in</p>
-            <p id="currentRole">Role: guest</p>
+      <nav class="top-nav nav-modern">
+        <div class="nav-shell">
+          <a class="brand brand--link" href="/">
+            <span class="brand-title">Uly Dala Coffee</span>
+            <span class="brand-subtitle">Kazakh Steppe Coffee Platform</span>
+          </a>
+          <div class="nav-links nav-links--pill">
+            <a class="nav-link is-active" href="/">Home</a>
+            <a class="nav-link" href="/auth.html" data-auth="guest">Sign in</a>
+            <a class="nav-link" href="/account.html">Account</a>
+            <a class="nav-link" href="/dashboard.html">Orders</a>
           </div>
-          <div class="nav-buttons">
-            <button class="ghost" id="refreshOrders">Refresh Orders</button>
-            <button class="btn-logout" id="logoutBtn" type="button" aria-label="Log out">
-              <span class="btn-logout__icon" aria-hidden="true">
-                <svg viewBox="0 0 512 512">
-                  <path
-                    d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"
-                  ></path>
-                </svg>
-              </span>
-              <span class="btn-logout__text">Logout</span>
-            </button>
+          <div class="nav-actions">
+            <div class="user-badge">
+              <p id="currentUser">Not signed in</p>
+            </div>
+            <div class="nav-buttons">
+              <button class="ghost" id="refreshOrders">Refresh Orders</button>
+              <button class="btn-logout" id="logoutBtn" type="button" aria-label="Log out">
+                <span class="btn-logout__icon" aria-hidden="true">
+                  <svg viewBox="0 0 512 512">
+                    <path
+                      d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"
+                    ></path>
+                  </svg>
+                </span>
+                <span class="btn-logout__text">Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
-      <header class="hero hero--landing">
-        <div class="hero__content">
-          <p class="eyebrow">Coffee Shop Platform</p>
-          <h1>Uly Dala Coffee</h1>
-          <p class="subtitle">
-            Inspired by the steppe — order, track, and manage your coffee experience with a secure
-            API and a bold new interface.
-          </p>
-          <div class="hero-actions">
-            <a class="primary" href="/auth.html">Create account</a>
-            <a class="ghost" href="/dashboard.html">Go to orders</a>
+      <main class="home">
+        <header class="hero hero--front">
+          <div class="hero-frame">
+            <div class="hero-copy">
+              <div class="hero-kicker">
+                <span class="pill">Steppe Roastery</span>
+                <span class="pill">Almaty</span>
+                <span class="pill">Est. 2019</span>
+              </div>
+              <h1>Uly Dala Coffee</h1>
+              <p class="subtitle">
+                Warm, bold, and crafted with steppe spirit. Explore single-origin lots, seasonal
+                blends, and a calm space built for long conversations.
+              </p>
+              <div class="hero-actions">
+                <a class="primary" href="/dashboard.html">Start an order</a>
+                <a class="ghost" href="/auth.html">Create account</a>
+              </div>
+              <div class="hero-metrics">
+                <div class="metric">
+                  <span class="metric-value">18</span>
+                  <span class="metric-label">single-origin lots</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-value">12 min</span>
+                  <span class="metric-label">average pickup</span>
+                </div>
+                <div class="metric">
+                  <span class="metric-value">4.9</span>
+                  <span class="metric-label">guest rating</span>
+                </div>
+              </div>
+            </div>
+            <div class="hero-visual">
+              <div class="hero-photo">
+                <img src="/images/latte.jpeg" alt="Latte art in a ceramic cup" />
+              </div>
+              <div class="hero-panel">
+                <p class="panel-kicker">Today on bar</p>
+                <h2>House favorites</h2>
+                <ul class="taste-list">
+                  <li><span>Salted Caramel Latte</span><span>2200 ₸</span></li>
+                  <li><span>Steppe Espresso</span><span>1500 ₸</span></li>
+                  <li><span>Sea-Buckthorn Cold Brew</span><span>2400 ₸</span></li>
+                  <li><span>Honey Oat Cappuccino</span><span>2000 ₸</span></li>
+                </ul>
+                <div class="panel-row">
+                  <span>Open now</span>
+                  <span>08:00–22:00</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="hero-tags">
-            <span class="tag">JWT-secured</span>
-            <span class="tag">MongoDB Atlas</span>
-            <span class="tag">Role-based access</span>
-          </div>
-        </div>
-        <div class="hero__card">
-          <h2>Steppe Rituals</h2>
-          <p>Quick sign-up, curated drinks, and a live order timeline.</p>
-          <ul class="hero-list">
-            <li>Register in minutes</li>
-            <li>Track every order</li>
-            <li>Premium priority queue</li>
-          </ul>
-          <div class="card-accent"></div>
-        </div>
-      </header>
+        </header>
 
-      <section class="grid landing-grid">
-        <article class="card">
-          <h2>Authentic Flow</h2>
-          <p>
-            Keep your account and orders in one place with JWT-secured access and a calm, structured
-            ordering experience.
-          </p>
-        </article>
-        <article class="card">
-          <h2>Order Command</h2>
-          <p>
-            Submit multi-item orders, set pickup times, and let staff update the brewing status in
-            real time.
-          </p>
-        </article>
-        <article class="card">
-          <h2>Premium Priority</h2>
-          <p>
-            Premium users can mark priority orders and move faster through the queue, while staff
-            oversee every change.
-          </p>
-        </article>
-      </section>
+        <section class="feature-strip">
+          <article class="feature-card">
+            <span class="feature-tag">Roastery</span>
+            <h3>Small-batch roasting</h3>
+            <p>Balanced profiles with a long finish, crafted in micro-lots.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-tag">Bakery</span>
+            <h3>Morning bakes</h3>
+            <p>Buttery layers, nutty crumbs, and seasonal pastries every day.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-tag">Space</span>
+            <h3>Quiet comfort</h3>
+            <p>Warm light, textured wood, and calm seating built to linger.</p>
+          </article>
+        </section>
+
+        <section class="menu-split">
+          <article class="menu-card">
+            <div class="menu-head">
+              <div>
+                <p class="eyebrow">Menu snapshot</p>
+                <h2>Today’s pour</h2>
+              </div>
+              <a class="ghost" href="/dashboard.html">Order now</a>
+            </div>
+            <ul class="menu-list menu-list--dense">
+              <li><span>Salted Caramel Latte</span><span>2200 ₸</span></li>
+              <li><span>Steppe Espresso</span><span>1500 ₸</span></li>
+              <li><span>Sea-Buckthorn Cold Brew</span><span>2400 ₸</span></li>
+              <li><span>Honey Oat Cappuccino</span><span>2000 ₸</span></li>
+              <li><span>Vanilla Raf</span><span>2100 ₸</span></li>
+            </ul>
+            <div class="menu-note">
+              <span>Pickup window</span>
+              <span>Average wait 12–18 min</span>
+            </div>
+          </article>
+          <article class="visit-card">
+            <div class="visit-head">
+              <p class="eyebrow">Visit</p>
+              <h2>Steppe lounge</h2>
+            </div>
+            <div class="visit-grid">
+              <div class="visit-item">
+                <span class="visit-label">Address</span>
+                <p>Abay Ave, Almaty</p>
+              </div>
+              <div class="visit-item">
+                <span class="visit-label">Hours</span>
+                <p>08:00–22:00 daily</p>
+              </div>
+              <div class="visit-item">
+                <span class="visit-label">Contact</span>
+                <p>+7 777 123 45 67</p>
+              </div>
+            </div>
+            <div class="visit-highlight">
+              Seasonal tasting flights every Friday.
+            </div>
+          </article>
+        </section>
+
+        <section class="gallery-section">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Steppe gallery</p>
+              <h2>Textures & pours</h2>
+            </div>
+            <div class="gallery-controls">
+              <button class="slider-btn" type="button" data-gallery-prev aria-label="Previous slide">
+                <span aria-hidden="true">‹</span>
+              </button>
+              <button class="slider-btn" type="button" data-gallery-next aria-label="Next slide">
+                <span aria-hidden="true">›</span>
+              </button>
+            </div>
+          </div>
+          <div class="gallery-slider" data-gallery>
+            <div class="gallery-track">
+              <div class="gallery-slide">
+                <figure class="gallery-card">
+                  <img src="/images/latte.jpeg" alt="Latte art in a ceramic cup" />
+                  <figcaption>
+                    <p class="gallery-title">Latte Art</p>
+                    <p>Silky milk, soft crema.</p>
+                  </figcaption>
+                </figure>
+                <figure class="gallery-card">
+                  <img src="/images/espresso.jpg" alt="Espresso shot on a warm table" />
+                  <figcaption>
+                    <p class="gallery-title">Espresso</p>
+                    <p>Deep, bold, and short.</p>
+                  </figcaption>
+                </figure>
+              </div>
+              <div class="gallery-slide">
+                <figure class="gallery-card">
+                  <img src="/images/cappuccino.jpeg" alt="Cappuccino with croissant" />
+                  <figcaption>
+                    <p class="gallery-title">Cappuccino</p>
+                    <p>Creamy foam, golden roast.</p>
+                  </figcaption>
+                </figure>
+                <figure class="gallery-card">
+                  <img src="/images/black_tea.png" alt="Tea served in a glass cup" />
+                  <figcaption>
+                    <p class="gallery-title">Black Tea</p>
+                    <p>Bright and refreshing.</p>
+                  </figcaption>
+                </figure>
+              </div>
+              <div class="gallery-slide">
+                <figure class="gallery-card">
+                  <img src="/images/brownie.jpeg" alt="Chocolate brownie on a plate" />
+                  <figcaption>
+                    <p class="gallery-title">Brownie</p>
+                    <p>Fudgy, dark, and rich.</p>
+                  </figcaption>
+                </figure>
+                <figure class="gallery-card">
+                  <img src="/images/cinnamon_roll.jpeg" alt="Cinnamon roll dessert" />
+                  <figcaption>
+                    <p class="gallery-title">Cinnamon Roll</p>
+                    <p>Sweet spice with coffee.</p>
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+          </div>
+          <div class="gallery-dots" role="tablist" aria-label="Gallery slides">
+            <button class="gallery-dot is-active" type="button" data-gallery-dot="0" aria-label="Slide 1"></button>
+            <button class="gallery-dot" type="button" data-gallery-dot="1" aria-label="Slide 2"></button>
+            <button class="gallery-dot" type="button" data-gallery-dot="2" aria-label="Slide 3"></button>
+          </div>
+        </section>
+
+        <section class="cta-band">
+          <div class="cta-content">
+            <h2>Ready for your next cup?</h2>
+            <p>Build a cart, schedule pickup, and track your order in real time.</p>
+          </div>
+          <div class="cta-actions">
+            <a class="primary" href="/dashboard.html">Start an order</a>
+            <a class="ghost" href="/auth.html">Create account</a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>Uly Dala Coffee · Crafted on the steppe</p>
+        <div class="footer-links">
+          <a href="/auth.html">Sign in</a>
+          <a href="/account.html">Account</a>
+          <a href="/dashboard.html">Order ahead</a>
+        </div>
+      </footer>
     </div>
 
     <script src="app.js"></script>

@@ -37,8 +37,8 @@
           </a>
           <div class="nav-links nav-links--pill">
             <a class="nav-link" href="/">Home</a>
-            <a class="nav-link is-active" href="/auth.html" data-auth="guest">Sign in</a>
-            <a class="nav-link" href="/account.html">Account</a>
+            <a class="nav-link" href="/auth.html" data-auth="guest">Sign in</a>
+            <a class="nav-link is-active" href="/account.html">Account</a>
             <a class="nav-link" href="/dashboard.html">Orders</a>
           </div>
           <div class="nav-actions">
@@ -65,58 +65,36 @@
 
       <section class="panel is-active">
         <div class="panel-header">
-          <h2>Account Access</h2>
-          <p>Register or sign in before placing orders.</p>
+          <h2>Account Settings</h2>
+          <p>Update your profile details used across the platform.</p>
         </div>
-        <div class="grid auth-grid auth-grid--stacked">
+        <div class="grid account-grid">
           <section class="card">
-            <h2>Sign in</h2>
-            <p class="card-subtitle">New here? Register below to get started.</p>
-            <form id="loginForm">
-              <label>
-                Email
-                <input type="email" name="email" required />
-              </label>
-              <label>
-                Password
-                <input type="password" name="password" required />
-              </label>
-              <button type="submit" class="primary">Login</button>
-            </form>
-            <p class="form-message" id="loginMessage"></p>
-          </section>
-
-          <div class="auth-divider">
-            <span>New here? Register below</span>
-          </div>
-
-          <section class="card">
-            <h2>Create account</h2>
-            <p class="card-subtitle">Already have an account? Sign in above.</p>
-            <form id="registerForm">
+            <h2>Profile</h2>
+            <form id="profileForm">
               <label>
                 Username
-                <input type="text" name="username" required minlength="3" />
+                <input type="text" name="username" minlength="3" />
               </label>
               <label>
                 Email
-                <input type="email" name="email" required />
+                <input type="email" name="email" />
               </label>
-              <label>
-                Password
-                <input type="password" name="password" required minlength="8" />
-                <span class="helper">At least 8 characters with a number.</span>
-              </label>
-              <label>
-                Role
-                <select name="role">
-                  <option value="user" selected>User</option>
-                  <option value="premium">Premium User</option>
-                </select>
-              </label>
-              <button type="submit" class="primary">Register</button>
+              <button type="submit" class="primary">Update profile</button>
             </form>
-            <p class="form-message" id="registerMessage"></p>
+            <p class="form-message" id="profileMessage"></p>
+          </section>
+
+          <section class="card">
+            <h2>Security</h2>
+            <p class="card-subtitle">Passwords are hashed with bcrypt and never stored in plain text.</p>
+            <div class="security-panel">
+              <div>
+                <span class="tag">JWT access</span>
+                <span class="tag">Role-based access</span>
+              </div>
+              <p>Need to update credentials? Log out and re-register with a new email.</p>
+            </div>
           </section>
         </div>
       </section>

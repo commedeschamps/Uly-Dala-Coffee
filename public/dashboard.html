@@ -4,10 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Uly Dala Coffee · Orders</title>
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('uly_dala_token')) {
+            document.documentElement.classList.add('auth-pending');
+          }
+        } catch (error) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -20,33 +29,36 @@
         <span></span>
       </div>
 
-      <nav class="top-nav">
-        <div class="brand">
-          <span class="brand-title">Uly Dala Coffee</span>
-          <span class="brand-subtitle">Kazakh Steppe Coffee Platform</span>
-        </div>
-        <div class="nav-links">
-          <a class="nav-link" href="/">Home</a>
-          <a class="nav-link" href="/auth.html">Account</a>
-          <a class="nav-link is-active" href="/dashboard.html">Orders</a>
-        </div>
-        <div class="nav-actions">
-          <div class="user-badge">
-            <p id="currentUser">Not signed in</p>
-            <p id="currentRole">Role: guest</p>
+      <nav class="top-nav nav-modern">
+        <div class="nav-shell">
+          <a class="brand brand--link" href="/">
+            <span class="brand-title">Uly Dala Coffee</span>
+            <span class="brand-subtitle">Kazakh Steppe Coffee Platform</span>
+          </a>
+          <div class="nav-links nav-links--pill">
+            <a class="nav-link" href="/">Home</a>
+            <a class="nav-link" href="/auth.html" data-auth="guest">Sign in</a>
+            <a class="nav-link" href="/account.html">Account</a>
+            <a class="nav-link is-active" href="/dashboard.html">Orders</a>
           </div>
-          <div class="nav-buttons">
-            <button class="ghost" id="refreshOrders">Refresh Orders</button>
-            <button class="btn-logout" id="logoutBtn" type="button" aria-label="Log out">
-              <span class="btn-logout__icon" aria-hidden="true">
-                <svg viewBox="0 0 512 512">
-                  <path
-                    d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"
-                  ></path>
-                </svg>
-              </span>
-              <span class="btn-logout__text">Logout</span>
-            </button>
+          <div class="nav-actions">
+            <div class="user-badge">
+              <p id="currentUser">Not signed in</p>
+              <p id="currentRole">Role: guest</p>
+            </div>
+            <div class="nav-buttons">
+              <button class="ghost" id="refreshOrders">Refresh Orders</button>
+              <button class="btn-logout" id="logoutBtn" type="button" aria-label="Log out">
+                <span class="btn-logout__icon" aria-hidden="true">
+                  <svg viewBox="0 0 512 512">
+                    <path
+                      d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"
+                    ></path>
+                  </svg>
+                </span>
+                <span class="btn-logout__text">Logout</span>
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -56,49 +68,101 @@
           <h2>Order Command Center</h2>
           <p>Manage your profile, place orders, and track their status.</p>
         </div>
-        <div class="grid dashboard-grid">
-          <section class="card">
-            <h2>Profile</h2>
-            <form id="profileForm">
-              <label>
-                Username
-                <input type="text" name="username" minlength="3" />
-              </label>
-              <label>
-                Email
-                <input type="email" name="email" />
-              </label>
-              <button type="submit" class="primary">Update profile</button>
-            </form>
-            <p class="form-message" id="profileMessage"></p>
+        <div class="order-flow">
+          <div class="flow-steps">
+            <span class="step-pill is-active">1. Choose drinks</span>
+            <span class="step-pill">2. Checkout</span>
+          </div>
+
+          <section class="card flow-left">
+            <div class="panel-header">
+              <h2>Pick your drinks</h2>
+              <p>Select a size, then add to cart.</p>
+            </div>
+            <div class="catalog">
+              <div class="catalog-header">
+                <h3>Signature Drinks</h3>
+                <p>Everyday favorites, crafted fresh.</p>
+              </div>
+              <div id="productsList" class="product-grid"></div>
+              <div class="catalog-header seasonal-header">
+                <h3>Seasonal Menu</h3>
+                <p>Limited-time flavors from the steppe.</p>
+              </div>
+              <div id="seasonalList" class="product-grid"></div>
+            </div>
           </section>
 
-          <section class="card card--order">
-            <div class="card-header">
-              <h2>New order</h2>
-              <span class="card-subtitle">Compose your custom coffee lineup</span>
-            </div>
-            <form id="orderForm">
-              <div id="itemsContainer"></div>
-              <div class="inline-actions">
-                <button type="button" class="ghost" id="addItemBtn">Add item</button>
-                <label class="inline">
-                  Priority
-                  <input type="checkbox" name="priority" />
-                </label>
+          <section class="card flow-right checkout-panel">
+            <form id="orderForm" class="checkout-form">
+              <header class="checkout-header">
+                <div>
+                  <p class="eyebrow">Checkout</p>
+                  <h2>Finalize your order</h2>
+                  <p class="checkout-subtitle">Review items, schedule pickup, and leave a note.</p>
+                </div>
+                <div class="checkout-status">
+                  <span class="status-dot" aria-hidden="true"></span>
+                  <span>Pickup · In-store</span>
+                </div>
+              </header>
+              <div class="checkout-summary">
+                <div class="summary-card">
+                  <span class="summary-label">Prep time</span>
+                  <strong>10–15 min</strong>
+                </div>
+                <div class="summary-card">
+                  <span class="summary-label">Window</span>
+                  <strong>ASAP or scheduled</strong>
+                </div>
+                <div class="summary-card">
+                  <span class="summary-label">Priority</span>
+                  <strong>Premium only</strong>
+                </div>
               </div>
-              <label>
-                Notes
-                <textarea name="notes" rows="3" placeholder="Any special requests?"></textarea>
-              </label>
-              <label>
-                Pickup Time
-                <input type="datetime-local" name="pickupTime" />
-              </label>
-              <button type="submit" class="primary">Place order</button>
+              <section class="checkout-block">
+                <div class="block-header">
+                  <h3>Cart</h3>
+                  <button type="button" class="ghost" id="clearCartBtn">Clear cart</button>
+                </div>
+                <div id="cartList" class="cart-list checkout-cart"></div>
+                <div class="cart-total checkout-total">
+                  <span>Total</span>
+                  <strong id="cartTotal">0 ₸</strong>
+                </div>
+              </section>
+              <section class="checkout-block">
+                <div class="block-header">
+                  <h3>Schedule & notes</h3>
+                  <span class="block-hint">Optional</span>
+                </div>
+                <label class="field">
+                  Pickup Time
+                  <input type="datetime-local" name="pickupTime" />
+                </label>
+                <label class="field">
+                  Notes
+                  <textarea name="notes" rows="3" placeholder="Any special requests?"></textarea>
+                </label>
+                <div class="priority-row">
+                  <label class="priority-toggle">
+                    <input type="checkbox" name="priority" />
+                    <span class="toggle-ui" aria-hidden="true"></span>
+                    <span>Priority prep</span>
+                  </label>
+                  <span class="toggle-hint">Premium users only</span>
+                </div>
+              </section>
+              <div class="checkout-footer">
+                <div class="checkout-note">
+                  <span>Need it faster? Premium users can enable priority.</span>
+                </div>
+                <button type="submit" class="primary">Place order</button>
+                <p class="form-message" id="orderMessage"></p>
+              </div>
             </form>
-            <p class="form-message" id="orderMessage"></p>
           </section>
+        </div>
 
           <section class="card card--list">
             <div class="card-header">
