@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Uly Dala Coffee · Account</title>
+    <title>Uly Dala Coffee · Admin</title>
     <script>
       (function () {
         try {
@@ -38,8 +38,8 @@
           <div class="nav-links nav-links--pill">
             <a class="nav-link" href="/">Home</a>
             <a class="nav-link" href="/auth.html" data-auth="guest">Sign in</a>
-            <a class="nav-link is-active" href="/account.html">Account</a>
-            <a class="nav-link" href="/admin.html" data-auth="admin">Admin</a>
+            <a class="nav-link" href="/account.html">Account</a>
+            <a class="nav-link is-active" href="/admin.html" data-auth="admin">Admin</a>
             <a class="nav-link" href="/dashboard.html">Orders</a>
           </div>
           <div class="nav-actions">
@@ -64,38 +64,72 @@
         </div>
       </nav>
 
-      <section class="panel is-active">
+      <section class="panel is-active admin-panel">
         <div class="panel-header">
-          <h2>Account Settings</h2>
-          <p>Update your profile details used across the platform.</p>
+          <h2>Admin Control Room</h2>
+          <p>Manage menu availability and keep orders moving.</p>
         </div>
-        <div class="grid account-grid">
-          <section class="card">
-            <h2>Profile</h2>
-            <form id="profileForm">
-              <label>
-                Username
-                <input type="text" name="username" minlength="3" />
-              </label>
-              <label>
-                Email
-                <input type="email" name="email" />
-              </label>
-              <button type="submit" class="primary">Update profile</button>
-            </form>
-            <p class="form-message" id="profileMessage"></p>
-          </section>
-
-          <section class="card">
-            <h2>Security</h2>
-            <p class="card-subtitle">Passwords are hashed with bcrypt and never stored in plain text.</p>
-            <div class="security-panel">
+        <div class="admin-grid">
+          <section class="card admin-section">
+            <div class="admin-section-header">
               <div>
-                <span class="tag">JWT access</span>
-                <span class="tag">Role-based access</span>
+                <h2>Menu management</h2>
+                <p class="card-subtitle">Create, update, hide, or delete products.</p>
               </div>
-              <p>Need to update credentials? Log out and re-register with a new email.</p>
             </div>
+            <form id="adminCreateProductForm" class="admin-form">
+              <div class="admin-form-grid">
+                <label>
+                  Name
+                  <input type="text" name="name" required />
+                </label>
+                <label>
+                  Category
+                  <input type="text" name="category" required />
+                </label>
+                <label>
+                  Price
+                  <input type="number" name="price" min="0" step="0.01" />
+                </label>
+                <label>
+                  Base price
+                  <input type="number" name="basePrice" min="0" step="0.01" />
+                </label>
+                <label>
+                  Image URL
+                  <input type="url" name="imageUrl" />
+                </label>
+                <label class="admin-check">
+                  <span>Available</span>
+                  <input type="checkbox" name="isAvailable" checked />
+                </label>
+              </div>
+              <label>
+                Description
+                <textarea name="description" rows="3"></textarea>
+              </label>
+              <label>
+                Sizes (optional JSON)
+                <textarea
+                  name="sizes"
+                  rows="3"
+                  placeholder='[{"label":"small","price":1800},{"label":"large","price":2400}]'
+                ></textarea>
+              </label>
+              <button type="submit" class="primary">Create product</button>
+              <p class="form-message" id="adminProductMessage"></p>
+            </form>
+            <div id="adminProductsList" class="admin-products"></div>
+          </section>
+          <section class="card admin-section">
+            <div class="admin-section-header">
+              <div>
+                <h2>Orders pipeline</h2>
+                <p class="card-subtitle">Update status from pending to delivered.</p>
+              </div>
+              <button type="button" class="ghost" id="adminRefreshOrders">Refresh</button>
+            </div>
+            <div id="adminOrdersList" class="admin-orders"></div>
           </section>
         </div>
       </section>
