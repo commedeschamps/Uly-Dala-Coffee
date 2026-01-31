@@ -3,6 +3,7 @@ const AppError = require('../utils/appError');
 const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal server error';
+  const stack = err.stack;
 
   if (err.name === 'CastError') {
     message = 'Invalid resource ID';
@@ -15,10 +16,15 @@ const errorHandler = (err, req, res, next) => {
   }
 
   if (process.env.NODE_ENV !== 'production') {
+    if (stack) {
+      console.error(stack);
+    } else {
+      console.error(err);
+    }
     return res.status(statusCode).json({
       status: 'error',
       message,
-      stack: err.stack,
+      stack,
     });
   }
 
