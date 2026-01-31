@@ -1,10 +1,19 @@
 const Joi = require('joi');
 
 const itemSchema = Joi.object({
-  name: Joi.string().min(2).max(60).required(),
+  product: Joi.string().hex().length(24),
+  name: Joi.string().min(2).max(60),
   size: Joi.string().valid('small', 'medium', 'large').default('medium'),
-  price: Joi.number().min(0).required(),
+  unitPrice: Joi.number().min(0),
   quantity: Joi.number().integer().min(1).default(1),
+}).custom((value, helpers) => {
+  if (value.product) {
+    return value;
+  }
+  if (!value.name || value.unitPrice === undefined) {
+    return helpers.message('Each item needs product or name + unitPrice.');
+  }
+  return value;
 });
 
 const createOrderSchema = Joi.object({
