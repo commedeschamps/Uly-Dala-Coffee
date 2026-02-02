@@ -4,7 +4,7 @@ const { sendOrderStatusEmail } = require('../services/emailService');
 const AppError = require('../utils/appError');
 const asyncHandler = require('../utils/asyncHandler');
 
-const staffRoles = ['admin'];
+const statusRoles = ['admin', 'barista'];
 
 const calculateTotal = (items) => {
   return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
@@ -59,10 +59,10 @@ const resolveItems = async (items) => {
 const createOrder = asyncHandler(async (req, res) => {
   const { items, notes, pickupTime, priority } = req.body;
 
-  const isStaff = staffRoles.includes(req.user.role);
+  const isAdmin = req.user.role === 'admin';
   const isPremium = req.user.role === 'premium';
 
-  if (priority && !(isStaff || isPremium)) {
+  if (priority && !(isAdmin || isPremium)) {
     throw new AppError('Only premium users or staff can set priority orders', 403);
   }
 
@@ -85,10 +85,11 @@ const createOrder = asyncHandler(async (req, res) => {
 });
 
 const getOrders = asyncHandler(async (req, res) => {
-  const isStaff = staffRoles.includes(req.user.role);
+  const canManageStatus = statusRoles.includes(req.user.role);
+  const isBarista = req.user.role === 'barista';
   const query = {};
 
-  if (!(isStaff && req.query.all === 'true')) {
+  if (!(isBarista || (canManageStatus && req.query.all === 'true'))) {
     query.user = req.user.id;
   }
 
@@ -96,7 +97,12 @@ const getOrders = asyncHandler(async (req, res) => {
     query.status = req.query.status;
   }
 
-  const orders = await Order.find(query).sort({ createdAt: -1 });
+  const shouldPopulateUser = canManageStatus && (isBarista || req.query.all === 'true');
+  const ordersQuery = Order.find(query).sort({ createdAt: -1 });
+  if (shouldPopulateUser) {
+    ordersQuery.populate('user', 'username');
+  }
+  const orders = await ordersQuery;
 
   res.status(200).json({
     status: 'success',
@@ -111,8 +117,8 @@ const getOrderById = asyncHandler(async (req, res) => {
     throw new AppError('Order not found', 404);
   }
 
-  const isStaff = staffRoles.includes(req.user.role);
-  if (!isStaff && order.user.toString() !== req.user.id) {
+  const canManageStatus = statusRoles.includes(req.user.role);
+  if (!canManageStatus && order.user.toString() !== req.user.id) {
     throw new AppError('Forbidden: insufficient permissions', 403);
   }
 
@@ -129,11 +135,24 @@ const updateOrder = asyncHandler(async (req, res) => {
   }
 
   const previousStatus = order.status;
-  const isStaff = staffRoles.includes(req.user.role);
+  const isAdmin = req.user.role === 'admin';
+  const isBarista = req.user.role === 'barista';
   const isPremium = req.user.role === 'premium';
 
-  if (!isStaff && order.user.toString() !== req.user.id) {
+  if (!isAdmin && !isBarista && order.user.toString() !== req.user.id) {
     throw new AppError('Forbidden: insufficient permissions', 403);
+  }
+
+  if (isBarista) {
+    const allowedKeys = ['status'];
+    const sentKeys = Object.keys(req.body || {});
+    const hasForbidden = sentKeys.some((key) => !allowedKeys.includes(key));
+    if (hasForbidden) {
+      throw new AppError('Barista can only update order status', 403);
+    }
+    if (!req.body.status) {
+      throw new AppError('Status is required', 400);
+    }
   }
 
   if (req.body.items) {
@@ -151,22 +170,26 @@ const updateOrder = asyncHandler(async (req, res) => {
   }
 
   if (req.body.priority !== undefined) {
-    if (!(isStaff || isPremium)) {
+    if (!(isAdmin || isPremium)) {
       throw new AppError('Only premium users or staff can set priority orders', 403);
     }
     order.priority = req.body.priority;
   }
 
   if (req.body.status) {
-    if (!isStaff) {
+    if (isBarista) {
+      order.status = req.body.status;
+    } else if (!isAdmin) {
       if (req.body.status !== 'cancelled') {
         throw new AppError('Only admin can update order status', 403);
       }
       if (order.status !== 'pending') {
         throw new AppError('Only pending orders can be cancelled', 400);
       }
+      order.status = req.body.status;
+    } else {
+      order.status = req.body.status;
     }
-    order.status = req.body.status;
   }
 
   await order.save();
@@ -199,9 +222,9 @@ const deleteOrder = asyncHandler(async (req, res) => {
     throw new AppError('Order not found', 404);
   }
 
-  const isStaff = staffRoles.includes(req.user.role);
+  const isAdmin = req.user.role === 'admin';
   const isOwner = order.user.toString() === req.user.id;
-  if (!isStaff) {
+  if (!isAdmin) {
     if (!isOwner || order.status !== 'pending') {
       throw new AppError('Only admin or order owner can delete a pending order', 403);
     }

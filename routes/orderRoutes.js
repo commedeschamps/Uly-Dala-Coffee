@@ -17,7 +17,7 @@ router.use(protect);
 
 router.post('/', validate(createOrderSchema), createOrder);
 router.get('/', getOrders);
-router.get('/all', authorizeRoles('admin'), (req, res, next) => {
+router.get('/all', authorizeRoles('admin', 'barista'), (req, res, next) => {
   req.query.all = 'true';
   next();
 }, getOrders);

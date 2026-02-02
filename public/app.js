@@ -11,6 +11,7 @@ const loadOrdersBtn = document.getElementById('loadOrdersBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const guestLinks = document.querySelectorAll('[data-auth=\"guest\"]');
 const adminLinks = document.querySelectorAll('[data-auth=\"admin\"]');
+const baristaLinks = document.querySelectorAll('[data-auth=\"barista\"]');
 const rootEl = document.documentElement;
 const userBadge = document.querySelector('.user-badge');
 
@@ -21,8 +22,8 @@ const orderMessage = document.getElementById('orderMessage');
 const currentUser = document.getElementById('currentUser');
 const currentRole = document.getElementById('currentRole');
 
-const productsList = document.getElementById('productsList');
-const seasonalList = document.getElementById('seasonalList');
+const drinksList = document.getElementById('drinksList');
+const dessertsList = document.getElementById('dessertsList');
 const cartList = document.getElementById('cartList');
 const cartTotal = document.getElementById('cartTotal');
 const clearCartBtn = document.getElementById('clearCartBtn');
@@ -38,10 +39,13 @@ const setToken = (token) => localStorage.setItem(tokenKey, token);
 const clearToken = () => localStorage.removeItem(tokenKey);
 
 const path = window.location.pathname;
-const onDashboard = path.endsWith('dashboard.html');
+const onOrders = path.endsWith('dashboard.html');
+const onProducts = path.endsWith('products.html');
+const onCheckout = path.endsWith('checkout.html');
 const onAuth = path.endsWith('auth.html');
 const onAccount = path.endsWith('account.html');
 const onAdmin = path.endsWith('admin.html');
+const onBarista = path.endsWith('barista.html');
 
 const redirectTo = (target) => {
   window.location.href = target;
@@ -85,6 +89,10 @@ const updateUserUI = (user, options = {}) => {
     const showAdmin = Boolean(user && user.role === 'admin');
     adminLinks.forEach((link) => link.classList.toggle('is-hidden', !showAdmin));
   }
+  if (baristaLinks.length) {
+    const showBarista = Boolean(user && (user.role === 'barista' || user.role === 'admin'));
+    baristaLinks.forEach((link) => link.classList.toggle('is-hidden', !showBarista));
+  }
   if (refreshOrdersBtn) {
     refreshOrdersBtn.disabled = !isLoggedIn;
   }
@@ -126,6 +134,167 @@ const updateUserUI = (user, options = {}) => {
   if (priorityCheckbox) {
     priorityCheckbox.disabled = !canUsePriority;
   }
+};
+
+const toastWavePath =
+  'M0,256L11.4,240C22.9,224,46,192,69,192C91.4,192,114,224,137,234.7C160,245,183,235,206,213.3C228.6,192,251,160,274,149.3C297.1,139,320,149,343,181.3C365.7,213,389,267,411,282.7C434.3,299,457,277,480,250.7C502.9,224,526,192,549,181.3C571.4,171,594,181,617,208C640,235,663,277,686,256C708.6,235,731,149,754,122.7C777.1,96,800,128,823,165.3C845.7,203,869,245,891,224C914.3,203,937,117,960,112C982.9,107,1006,181,1029,197.3C1051.4,213,1074,171,1097,144C1120,117,1143,107,1166,133.3C1188.6,160,1211,224,1234,218.7C1257.1,213,1280,139,1303,133.3C1325.7,128,1349,192,1371,192C1394.3,192,1417,128,1429,96L1440,64L1440,320L1428.6,320C1417.1,320,1394,320,1371,320C1348.6,320,1326,320,1303,320C1280,320,1257,320,1234,320C1211.4,320,1189,320,1166,320C1142.9,320,1120,320,1097,320C1074.3,320,1051,320,1029,320C1005.7,320,983,320,960,320C937.1,320,914,320,891,320C868.6,320,846,320,823,320C800,320,777,320,754,320C731.4,320,709,320,686,320C662.9,320,640,320,617,320C594.3,320,571,320,549,320C525.7,320,503,320,480,320C457.1,320,434,320,411,320C388.6,320,366,320,343,320C320,320,297,320,274,320C251.4,320,229,320,206,320C182.9,320,160,320,137,320C114.3,320,91,320,69,320C45.7,320,23,320,11,320L0,320Z';
+
+const toastIcons = {
+  info: `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke-width="0" fill="currentColor" stroke="currentColor" class="toast-icon">
+      <path d="M13 7.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-3 3.75a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v4.25h.75a.75.75 0 0 1 0 1.5h-3a.75.75 0 0 1 0-1.5h.75V12h-.75a.75.75 0 0 1-.75-.75Z"></path>
+      <path d="M12 1c6.075 0 11 4.925 11 11s-4.925 11-11 11S1 18.075 1 12 5.925 1 12 1ZM2.5 12a9.5 9.5 0 0 0 9.5 9.5 9.5 9.5 0 0 0 9.5-9.5A9.5 9.5 0 0 0 12 2.5 9.5 9.5 0 0 0 2.5 12Z"></path>
+    </svg>
+  `,
+  error: `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" stroke-width="0" fill="currentColor" stroke="currentColor" class="toast-icon">
+      <path d="M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c-9.4 9.4-9.4 24.6 0 33.9l47 47-47 47c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l47-47 47 47c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-47-47 47-47c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-47 47-47-47c-9.4-9.4-24.6-9.4-33.9 0z"></path>
+    </svg>
+  `,
+};
+
+let toastContainer = null;
+
+const ensureToastContainer = () => {
+  if (toastContainer) return toastContainer;
+  toastContainer = document.getElementById('toastContainer');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toastContainer';
+    toastContainer.className = 'toast-container';
+    document.body.appendChild(toastContainer);
+  }
+  return toastContainer;
+};
+
+const removeToast = (toast) => {
+  toast.classList.add('is-leaving');
+  toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  setTimeout(() => {
+    if (toast.isConnected) toast.remove();
+  }, 700);
+};
+
+const showToast = ({ type = 'info', title = 'Info message', message = '' } = {}) => {
+  const container = ensureToastContainer();
+  const toast = document.createElement('div');
+  const toastType = type === 'error' ? 'error' : 'info';
+  toast.className = `toast-card toast-${toastType}`;
+  toast.setAttribute('role', toastType === 'error' ? 'alert' : 'status');
+  toast.innerHTML = `
+    <svg class="toast-wave" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
+      <path d="${toastWavePath}" fill-opacity="1"></path>
+    </svg>
+    <div class="toast-icon-wrap">
+      ${toastIcons[toastType]}
+    </div>
+    <div class="toast-text">
+      <p class="toast-title"></p>
+      <p class="toast-message"></p>
+    </div>
+    <button type="button" class="toast-close" aria-label="Dismiss notification">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 15" stroke-width="0" fill="none" stroke="currentColor">
+        <path fill="currentColor" d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" clip-rule="evenodd" fill-rule="evenodd"></path>
+      </svg>
+    </button>
+  `;
+
+  const titleEl = toast.querySelector('.toast-title');
+  const messageEl = toast.querySelector('.toast-message');
+  const closeBtn = toast.querySelector('.toast-close');
+
+  if (titleEl) titleEl.textContent = title;
+  if (messageEl) messageEl.textContent = message;
+  if (closeBtn) closeBtn.addEventListener('click', () => removeToast(toast));
+
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('is-visible'));
+
+  setTimeout(() => removeToast(toast), 4500);
+};
+
+let cartToastContainer = null;
+
+const ensureCartToastContainer = () => {
+  if (cartToastContainer) return cartToastContainer;
+  cartToastContainer = document.getElementById('cartToastContainer');
+  if (!cartToastContainer) {
+    cartToastContainer = document.createElement('div');
+    cartToastContainer.id = 'cartToastContainer';
+    cartToastContainer.className = 'cart-toast-container';
+    document.body.appendChild(cartToastContainer);
+  }
+  return cartToastContainer;
+};
+
+const removeCartToast = (toast) => {
+  toast.classList.add('is-leaving');
+  toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  setTimeout(() => {
+    if (toast.isConnected) toast.remove();
+  }, 700);
+};
+
+const showCartToast = ({ name = 'Item', price = '' } = {}) => {
+  const container = ensureCartToastContainer();
+  const toast = document.createElement('div');
+  toast.className = 'cart-toast';
+  toast.innerHTML = `
+    <svg class="toast-wave" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
+      <path d="${toastWavePath}" fill-opacity="1"></path>
+    </svg>
+    <div class="cart-icon">
+      <div class="icon-cart-box">
+        <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 576 512">
+          <path fill="#000" d="M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"></path>
+        </svg>
+      </div>
+    </div>
+    <div class="cart-content">
+      <div class="cart-title-wrapper">
+        <span class="cart-title">Added to cart!</span>
+        <button type="button" class="cart-close" aria-label="Dismiss">
+          <svg xmlns="http://www.w3.org/2000/svg" height="15" width="15" viewBox="0 0 384 512">
+            <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="cart-product"></div>
+      <div class="cart-price"></div>
+      <button type="button" class="cart-button">
+        View cart
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 10.28a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l1.72 1.72H8.25a.75.75 0 000 1.5h5.69l-1.72 1.72a.75.75 0 101.06 1.06l3-3z" clip-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+  `;
+
+  const productEl = toast.querySelector('.cart-product');
+  const priceEl = toast.querySelector('.cart-price');
+  const closeBtn = toast.querySelector('.cart-close');
+  const viewBtn = toast.querySelector('.cart-button');
+
+  if (productEl) productEl.textContent = name;
+  if (priceEl) {
+    if (price) {
+      priceEl.textContent = price;
+    } else {
+      priceEl.remove();
+    }
+  }
+  if (closeBtn) closeBtn.addEventListener('click', () => removeCartToast(toast));
+  if (viewBtn) {
+    viewBtn.addEventListener('click', () => {
+      removeCartToast(toast);
+      redirectTo('/checkout.html');
+    });
+  }
+
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('is-visible'));
+
+  setTimeout(() => removeCartToast(toast), 5200);
 };
 
 const cartKey = 'uly_dala_cart';
@@ -318,41 +487,49 @@ const renderProductCard = (product, container) => {
       unitPrice,
       quantity: 1,
     });
+    const displaySize = sizeSelect ? selectedSize : '';
+    showCartToast({
+      name: `${product.name}${displaySize ? ` (${displaySize})` : ''}`,
+      price: formatCurrency(unitPrice),
+    });
   });
 
   container.appendChild(card);
 };
 
 const loadProducts = async () => {
-  if (!productsList || !seasonalList) {
+  if (!drinksList || !dessertsList) {
     return;
   }
-  productsList.innerHTML = '';
-  seasonalList.innerHTML = '';
+  drinksList.innerHTML = '';
+  dessertsList.innerHTML = '';
+
+  const dessertKeywords = ['dessert', 'pastry', 'bakery', 'sweet', 'cake'];
 
   try {
     const data = await fetchJSON(`${apiBase}/products?available=true`);
     const products = data.products || [];
-    const seasonal = products.filter((product) =>
-      (product.category || '').toLowerCase().includes('seasonal')
-    );
-    const regular = products.filter(
-      (product) => !(product.category || '').toLowerCase().includes('seasonal')
-    );
 
-    if (!regular.length) {
-      productsList.innerHTML = '<p>No products available yet.</p>';
+    const desserts = products.filter((product) => {
+      const category = (product.category || '').toLowerCase();
+      return dessertKeywords.some((keyword) => category.includes(keyword));
+    });
+
+    const drinks = products.filter((product) => !desserts.includes(product));
+
+    if (!drinks.length) {
+      drinksList.innerHTML = '<p>No drinks available yet.</p>';
     } else {
-      regular.forEach((product) => renderProductCard(product, productsList));
+      drinks.forEach((product) => renderProductCard(product, drinksList));
     }
 
-    if (!seasonal.length) {
-      seasonalList.innerHTML = '<p>No seasonal items right now.</p>';
+    if (!desserts.length) {
+      dessertsList.innerHTML = '<p>No desserts available yet.</p>';
     } else {
-      seasonal.forEach((product) => renderProductCard(product, seasonalList));
+      desserts.forEach((product) => renderProductCard(product, dessertsList));
     }
   } catch (error) {
-    productsList.innerHTML = `<p>${error.message}</p>`;
+    drinksList.innerHTML = `<p>${error.message}</p>`;
   }
 };
 
@@ -535,7 +712,7 @@ const renderAdminOrders = (orders = []) => {
       .join(', ');
     const userLabel =
       order.user && typeof order.user === 'object'
-        ? order.user.email || order.user.username || order.user._id
+        ? order.user.username || order.user._id
         : order.user;
 
     card.innerHTML = `
@@ -561,7 +738,7 @@ const renderAdminOrders = (orders = []) => {
             .join('')}
         </select>
         <button type="button" class="primary" data-action="status">Update status</button>
-        <button type="button" class="ghost" data-action="delete">Delete</button>
+        ${activeUser && activeUser.role === 'admin' ? '<button type="button" class="ghost" data-action="delete">Delete</button>' : ''}
       </div>
       <p class="form-message admin-inline-message"></p>
     `;
@@ -591,19 +768,21 @@ const renderAdminOrders = (orders = []) => {
       }
     });
 
-    deleteBtn.addEventListener('click', async () => {
-      if (!confirm('Delete this order?')) {
-        return;
-      }
-      try {
-        await fetchJSON(`${apiBase}/orders/${order._id}`, { method: 'DELETE' });
-        await loadAdminOrders();
-      } catch (error) {
-        if (message) {
-          message.textContent = error.message;
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', async () => {
+        if (!confirm('Delete this order?')) {
+          return;
         }
-      }
-    });
+        try {
+          await fetchJSON(`${apiBase}/orders/${order._id}`, { method: 'DELETE' });
+          await loadAdminOrders();
+        } catch (error) {
+          if (message) {
+            message.textContent = error.message;
+          }
+        }
+      });
+    }
 
     adminOrdersList.appendChild(card);
   });
@@ -621,7 +800,8 @@ const renderOrders = (orders = []) => {
   }
 
   const token = getToken();
-  const isStaff = activeUser && activeUser.role === 'admin';
+  const isStaff = activeUser && ['admin', 'barista'].includes(activeUser.role);
+  const canDelete = activeUser && activeUser.role === 'admin';
 
   orders.forEach((order) => {
     const card = document.createElement('div');
@@ -672,11 +852,13 @@ const renderOrders = (orders = []) => {
       actions.appendChild(statusSelect);
       actions.appendChild(statusBtn);
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'ghost';
-      deleteBtn.textContent = 'Delete order';
-      deleteBtn.addEventListener('click', () => deleteOrder(order._id));
-      actions.appendChild(deleteBtn);
+      if (canDelete) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'ghost';
+        deleteBtn.textContent = 'Delete order';
+        deleteBtn.addEventListener('click', () => deleteOrder(order._id));
+        actions.appendChild(deleteBtn);
+      }
     }
 
     ordersList.appendChild(card);
@@ -692,7 +874,7 @@ const loadOrders = async () => {
     if (ordersList) {
       ordersList.innerHTML = '<p>Please log in to view orders.</p>';
     }
-    if (onDashboard || onAccount) {
+    if (onOrders || onAccount || onCheckout || onBarista) {
       redirectTo('/auth.html');
     }
     return;
@@ -764,7 +946,7 @@ if (registerForm) {
         redirectTo('/account.html');
         return;
       }
-      if (onDashboard) {
+      if (onOrders) {
         await loadOrders();
       }
     } catch (error) {
@@ -799,7 +981,7 @@ if (loginForm) {
         redirectTo('/account.html');
         return;
       }
-      if (onDashboard) {
+      if (onOrders) {
         await loadOrders();
       }
     } catch (error) {
@@ -821,7 +1003,7 @@ if (profileForm) {
       if (profileMessage) {
         profileMessage.textContent = 'Please log in first.';
       }
-    if (onDashboard || onAccount) {
+    if (onOrders || onAccount || onCheckout) {
       redirectTo('/auth.html');
     }
     return;
@@ -857,7 +1039,12 @@ if (orderForm) {
       if (orderMessage) {
         orderMessage.textContent = 'Please log in to place an order.';
       }
-      if (onDashboard) {
+      showToast({
+        type: 'error',
+        title: 'Login required',
+        message: 'Please sign in to place an order.',
+      });
+      if (onCheckout) {
         redirectTo('/auth.html');
       }
       return;
@@ -892,22 +1079,32 @@ if (orderForm) {
       if (orderMessage) {
         orderMessage.textContent = 'Order placed!';
       }
+      showToast({
+        type: 'info',
+        title: 'Order received',
+        message: 'We are preparing your order now.',
+      });
       orderForm.reset();
       clearCart();
-      if (onDashboard) {
+      if (onOrders) {
         await loadOrders();
       }
     } catch (error) {
       if (orderMessage) {
         orderMessage.textContent = error.message;
       }
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: error.message || 'Something went wrong.',
+      });
     }
   });
 }
 
 if (refreshOrdersBtn) {
   refreshOrdersBtn.addEventListener('click', () => {
-    if (!onDashboard) {
+    if (!onOrders) {
       redirectTo('/dashboard.html');
       return;
     }
@@ -925,7 +1122,7 @@ if (logoutBtn) {
       ordersList.innerHTML = '<p>You have logged out.</p>';
     }
     clearCart();
-    if (onDashboard || onAccount || onAdmin) {
+    if (onOrders || onCheckout || onAccount || onAdmin || onBarista) {
       redirectTo('/auth.html');
     }
   });
@@ -1119,7 +1316,7 @@ const init = async () => {
   updateUserUI(null, { assumeLoggedIn: Boolean(token) });
   renderCart();
 
-  if (!token && (onDashboard || onAccount || onAdmin)) {
+  if (!token && (onOrders || onCheckout || onAccount || onAdmin || onBarista)) {
     redirectTo('/auth.html');
     return;
   }
@@ -1136,19 +1333,30 @@ const init = async () => {
         redirectTo('/dashboard.html');
         return;
       }
+      if (onBarista && !['admin', 'barista'].includes(data.user.role)) {
+        redirectTo('/dashboard.html');
+        return;
+      }
     } catch (error) {
       clearToken();
       updateUserUI(null);
     }
   }
 
-  if (onDashboard) {
+  if (onProducts) {
     await loadProducts();
+  }
+
+  if (onOrders) {
     await loadOrders();
   }
 
   if (onAdmin) {
     await loadAdminProducts();
+    await loadAdminOrders();
+  }
+
+  if (onBarista) {
     await loadAdminOrders();
   }
 
