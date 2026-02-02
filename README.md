@@ -1,12 +1,12 @@
 # Uly Dala Coffee
 
-A coffee shop ordering platform built with Node.js, Express, and MongoDB Atlas. Users can register, log in, manage their profile, and place coffee orders with real-time status updates. Staff roles (admin/moderator) can manage order status and deletes, while premium users can submit priority orders.
+A coffee shop ordering platform built with Node.js, Express, and MongoDB Atlas. Users can register, log in, manage their profile, and place coffee orders with real-time status updates. Staff roles (admin/barista) can manage order status and deletes, while premium users can submit priority orders.
 
 ## Project Overview
 
 **Core features**
 - JWT authentication with secure password hashing.
-- Role-based access control (admin, moderator, premium user, user).
+- Role-based access control (admin, barista, premium user, user).
 - Order management (create, list, update, delete) tied to the logged-in user.
 - SMTP email integration for welcome and order status updates.
 - Responsive front-end UI served from Express.
@@ -108,7 +108,7 @@ Request body:
 - Update an order (owner can cancel, staff can update status).
 
 **DELETE /orders/:id** (also available as `/api/orders/:id`)
-- Delete an order (admin/moderator only).
+- Delete an order (admin only).
 
 ## Roles & RBAC
 
