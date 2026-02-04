@@ -33,7 +33,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use((req, res, next) => {
-  next(new AppError(`Route not found: ${req.originalUrl}`, 404));
+  res.status(404).sendFile(path.join(__dirname, 'public', 'not_found.html'));
 });
 
 app.use(errorHandler);

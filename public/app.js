@@ -14,13 +14,15 @@ const adminLinks = document.querySelectorAll('[data-auth=\"admin\"]');
 const baristaLinks = document.querySelectorAll('[data-auth=\"barista\"]');
 const rootEl = document.documentElement;
 const userBadge = document.querySelector('.user-badge');
-
+const showPasswordBtn = document.querySelectorAll('.show-password');
 const registerMessage = document.getElementById('registerMessage');
 const loginMessage = document.getElementById('loginMessage');
 const profileMessage = document.getElementById('profileMessage');
 const orderMessage = document.getElementById('orderMessage');
 const currentUser = document.getElementById('currentUser');
 const currentRole = document.getElementById('currentRole');
+const passwordInput = document.getElementById('password');
+const togglePasswordIcon = document.getElementById('togglePasswordIcon');
 
 const drinksList = document.getElementById('drinksList');
 const dessertsList = document.getElementById('dessertsList');
@@ -46,6 +48,37 @@ const onAuth = path.endsWith('auth.html');
 const onAccount = path.endsWith('account.html');
 const onAdmin = path.endsWith('admin.html');
 const onBarista = path.endsWith('barista.html');
+
+const togglePasswordVisibility = (event) => {
+  const trigger = event?.currentTarget || event?.target;
+  const scope = trigger?.closest('label') || document;
+  const input =
+    scope.querySelector('input[type="password"], input[type="text"]') || passwordInput;
+  if (!input) {
+    return;
+  }
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+
+  const icon = scope.querySelector('#togglePasswordIcon') || togglePasswordIcon;
+  if (icon) {
+    icon.classList.toggle('fa-eye-slash', isHidden);
+  }
+  if (trigger && trigger.classList && trigger.classList.contains('show-password')) {
+    trigger.textContent = isHidden ? 'Hide Password' : 'Show Password';
+  }
+};
+
+if (showPasswordBtn.length) {
+  showPasswordBtn.forEach((btn) => btn.addEventListener('click', togglePasswordVisibility));
+}
+if (togglePasswordIcon) {
+  togglePasswordIcon.addEventListener('click', togglePasswordVisibility);
+}
+
+window.togglePasswordVisibility = togglePasswordVisibility;
+
+
 
 const redirectTo = (target) => {
   window.location.href = target;

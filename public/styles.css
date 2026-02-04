@@ -308,6 +308,12 @@ body.page-leave {
   transition: all 0.25s ease;
 }
 
+.primary:hover,
+.ghost:hover,
+.btn-logout:hover {
+  transform: translateY(-1px);
+}
+
 .primary {
   color: #fff;
   background: linear-gradient(135deg, var(--accent), #d79a63);
@@ -876,26 +882,30 @@ textarea:focus-visible {
 }
 
 .account-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
+  align-items: start;
 }
 
-.security-panel {
-  padding: 16px;
-  border-radius: var(--radius);
-  background: rgba(124, 155, 130, 0.16);
-  border: 1px solid rgba(124, 155, 130, 0.3);
-  color: var(--accent-2);
+.account-card {
+  display: grid;
+  gap: 16px;
 }
 
-.tag {
-  display: inline-flex;
+.account-card .card-header {
+  margin-bottom: 0;
+}
+
+.account-form {
+  display: grid;
+  gap: 14px;
+}
+
+.account-form-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(201, 130, 82, 0.16);
-  color: var(--accent);
-  font-size: 0.75rem;
-  margin-right: 6px;
+  justify-content: space-between;
 }
 
 .order-flow {
@@ -982,6 +992,7 @@ textarea:focus-visible {
   font-size: 0.9rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: inherit;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1682,7 +1693,12 @@ textarea:focus-visible {
 .admin-order-card {
   animation: reveal 0.7s ease both;
 }
+.gallery-card{
+  animation: 
+reveal 0.7s ease 0.1s both;
+border-width: 1em;
 
+}
 @keyframes reveal {
   from {
     opacity: 0;
@@ -1719,10 +1735,14 @@ textarea:focus-visible {
     display: none;
   }
 
+  .show-password{
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+  }
   .hero-frame {
     grid-template-columns: 1fr;
   }
-
   .feature-strip,
   .menu-split,
   .account-grid,
@@ -1745,6 +1765,11 @@ textarea:focus-visible {
   .auth-grid,
   .auth-grid--stacked {
     grid-template-columns: 1fr;
+  }
+
+  .account-form-footer {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .auth-divider {
@@ -1781,6 +1806,7 @@ textarea:focus-visible {
   .products-panel .product-grid {
     grid-template-columns: 1fr;
   }
+
 }
 
 @media (max-width: 700px) {

@@ -75,32 +75,30 @@
           <p>Update your profile details used across the platform.</p>
         </div>
         <div class="grid account-grid">
-          <section class="card">
-            <h2>Profile</h2>
-            <form id="profileForm">
+          <section class="card account-card">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Profile</p>
+                <h2>Personal details</h2>
+                <p class="card-subtitle">Keep your info aligned with receipts and pickup alerts.</p>
+              </div>
+              <span class="badge">Active</span>
+            </div>
+            <form id="profileForm" class="account-form">
               <label>
                 Username
-                <input type="text" name="username" minlength="3" />
+                <input type="text" name="username" minlength="3" placeholder="Your display name" />
               </label>
               <label>
                 Email
-                <input type="email" name="email" />
+                <input type="email" name="email" placeholder="name@email.com" />
               </label>
-              <button type="submit" class="primary">Update profile</button>
+              <div class="account-form-footer">
+                <button type="submit" class="primary">Update profile</button>
+                <span class="helper">Changes sync across orders and notifications.</span>
+              </div>
             </form>
             <p class="form-message" id="profileMessage"></p>
-          </section>
-
-          <section class="card">
-            <h2>Security</h2>
-            <p class="card-subtitle">Passwords are hashed with bcrypt and never stored in plain text.</p>
-            <div class="security-panel">
-              <div>
-                <span class="tag">JWT access</span>
-                <span class="tag">Role-based access</span>
-              </div>
-              <p>Need to update credentials? Log out and re-register with a new email.</p>
-            </div>
           </section>
         </div>
       </section>
