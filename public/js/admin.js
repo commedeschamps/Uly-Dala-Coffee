@@ -1,4 +1,3 @@
-import { apiBase } from './config.js';
 import {
   adminProductsList,
   adminOrdersList,
@@ -9,6 +8,56 @@ import {
 import { fetchJSON } from './api.js';
 import { parseOptionalNumber, formatCurrency } from './utils.js';
 import { getActiveUser } from './state.js';
+import { setStatusMessage, setFormMessage, setButtonBusy, showToast } from './ui.js';
+
+const createInputLabel = ({ label, type = 'text', name, value, ...attrs }) => {
+  const labelEl = document.createElement('label');
+  labelEl.textContent = label;
+
+  const input = document.createElement('input');
+  input.type = type;
+  input.name = name;
+  input.value = value ?? '';
+  Object.entries(attrs).forEach(([key, val]) => {
+    if (val === undefined || val === null) {
+      return;
+    }
+    input.setAttribute(key, String(val));
+  });
+
+  labelEl.appendChild(input);
+  return { labelEl, input };
+};
+
+const createTextareaLabel = ({ label, name, value, rows = 3 }) => {
+  const labelEl = document.createElement('label');
+  labelEl.textContent = label;
+
+  const textarea = document.createElement('textarea');
+  textarea.name = name;
+  textarea.rows = rows;
+  textarea.value = value ?? '';
+
+  labelEl.appendChild(textarea);
+  return { labelEl, textarea };
+};
+
+const createCheckLabel = ({ label, name, checked }) => {
+  const labelEl = document.createElement('label');
+  labelEl.className = 'admin-check';
+
+  const span = document.createElement('span');
+  span.textContent = label;
+
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.name = name;
+  input.checked = Boolean(checked);
+
+  labelEl.appendChild(span);
+  labelEl.appendChild(input);
+  return { labelEl, input };
+};
 
 const renderAdminProducts = (products = []) => {
   if (!adminProductsList) {
@@ -17,84 +66,135 @@ const renderAdminProducts = (products = []) => {
   adminProductsList.innerHTML = '';
 
   if (!products.length) {
-    adminProductsList.innerHTML = '<p>No products found.</p>';
+    setStatusMessage(adminProductsList, {
+      state: 'empty',
+      message: 'No products found.',
+    });
     return;
   }
 
   products.forEach((product) => {
     const card = document.createElement('div');
     card.className = 'admin-product-card';
-    const priceValue = product.price ?? '';
-    const basePriceValue = product.basePrice ?? '';
-    const imageUrlValue = product.imageUrl ?? '';
-    const descriptionValue = product.description ?? '';
+
+    const head = document.createElement('div');
+    head.className = 'admin-product-head';
+
+    const titleWrap = document.createElement('div');
+    const title = document.createElement('h3');
+    title.textContent = product.name || 'Untitled product';
+    const meta = document.createElement('p');
+    meta.className = 'admin-product-meta';
+    meta.textContent = `ID: ${product._id}`;
+
+    titleWrap.appendChild(title);
+    titleWrap.appendChild(meta);
+
     const statusLabel = product.isAvailable ? 'Live' : 'Hidden';
     const statusClass = product.isAvailable ? 'is-on' : 'is-off';
+    const badge = document.createElement('span');
+    badge.className = `admin-badge ${statusClass}`;
+    badge.textContent = statusLabel;
 
-    card.innerHTML = `
-      <div class="admin-product-head">
-        <div>
-          <h3>${product.name}</h3>
-          <p class="admin-product-meta">ID: ${product._id}</p>
-        </div>
-        <span class="admin-badge ${statusClass}">${statusLabel}</span>
-      </div>
-      <div class="admin-product-grid">
-        <label>
-          Name
-          <input type="text" name="name" value="${product.name || ''}" />
-        </label>
-        <label>
-          Category
-          <input type="text" name="category" value="${product.category || ''}" />
-        </label>
-        <label>
-          Price
-          <input type="number" name="price" min="0" step="0.01" value="${priceValue}" />
-        </label>
-        <label>
-          Base price
-          <input type="number" name="basePrice" min="0" step="0.01" value="${basePriceValue}" />
-        </label>
-        <label>
-          Image URL
-          <input type="url" name="imageUrl" value="${imageUrlValue}" />
-        </label>
-        <label class="admin-check">
-          <span>Available</span>
-          <input type="checkbox" name="isAvailable" ${product.isAvailable ? 'checked' : ''} />
-        </label>
-      </div>
-      <label>
-        Description
-        <textarea name="description" rows="3">${descriptionValue}</textarea>
-      </label>
-      <div class="admin-product-actions">
-        <button type="button" class="primary" data-action="update">Update</button>
-        <button type="button" class="ghost" data-action="delete">Delete</button>
-      </div>
-      <p class="form-message admin-inline-message"></p>
-    `;
+    head.appendChild(titleWrap);
+    head.appendChild(badge);
 
-    const message = card.querySelector('.admin-inline-message');
-    const updateBtn = card.querySelector('[data-action="update"]');
-    const deleteBtn = card.querySelector('[data-action="delete"]');
+    const grid = document.createElement('div');
+    grid.className = 'admin-product-grid';
+
+    const nameField = createInputLabel({
+      label: 'Name',
+      name: 'name',
+      value: product.name || '',
+    });
+    const categoryField = createInputLabel({
+      label: 'Category',
+      name: 'category',
+      value: product.category || '',
+    });
+    const priceField = createInputLabel({
+      label: 'Price',
+      name: 'price',
+      type: 'number',
+      value: product.price ?? '',
+      min: '0',
+      step: '0.01',
+    });
+    const basePriceField = createInputLabel({
+      label: 'Base price',
+      name: 'basePrice',
+      type: 'number',
+      value: product.basePrice ?? '',
+      min: '0',
+      step: '0.01',
+    });
+    const imageField = createInputLabel({
+      label: 'Image URL',
+      name: 'imageUrl',
+      type: 'url',
+      value: product.imageUrl || '',
+    });
+    const availabilityField = createCheckLabel({
+      label: 'Available',
+      name: 'isAvailable',
+      checked: product.isAvailable,
+    });
+
+    grid.appendChild(nameField.labelEl);
+    grid.appendChild(categoryField.labelEl);
+    grid.appendChild(priceField.labelEl);
+    grid.appendChild(basePriceField.labelEl);
+    grid.appendChild(imageField.labelEl);
+    grid.appendChild(availabilityField.labelEl);
+
+    const descriptionField = createTextareaLabel({
+      label: 'Description',
+      name: 'description',
+      value: product.description || '',
+      rows: 3,
+    });
+
+    const actions = document.createElement('div');
+    actions.className = 'admin-product-actions';
+
+    const updateBtn = document.createElement('button');
+    updateBtn.type = 'button';
+    updateBtn.className = 'primary';
+    updateBtn.textContent = 'Update';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'ghost';
+    deleteBtn.textContent = 'Delete';
+
+    actions.appendChild(updateBtn);
+    actions.appendChild(deleteBtn);
+
+    const message = document.createElement('p');
+    message.className = 'form-message admin-inline-message';
 
     updateBtn.addEventListener('click', async () => {
-      if (message) {
-        message.textContent = '';
+      setFormMessage(message, { message: '' });
+
+      const name = nameField.input.value.trim();
+      const category = categoryField.input.value.trim();
+      const priceInput = priceField.input.value;
+      const basePriceInput = basePriceField.input.value;
+      const imageUrl = imageField.input.value.trim();
+      const description = descriptionField.textarea.value.trim();
+      const isAvailable = availabilityField.input.checked;
+
+      if (!name || !category) {
+        setFormMessage(message, {
+          message: 'Name and category are required.',
+          state: 'error',
+        });
+        return;
       }
-      const name = card.querySelector('input[name="name"]').value.trim();
-      const category = card.querySelector('input[name="category"]').value.trim();
-      const priceInput = card.querySelector('input[name="price"]').value;
-      const basePriceInput = card.querySelector('input[name="basePrice"]').value;
-      const imageUrl = card.querySelector('input[name="imageUrl"]').value.trim();
-      const description = card.querySelector('textarea[name="description"]').value.trim();
-      const isAvailable = card.querySelector('input[name="isAvailable"]').checked;
 
       const payload = {
-        name: name || product.name,
-        category: category || product.category,
+        name,
+        category,
         description,
         imageUrl,
         isAvailable,
@@ -108,19 +208,31 @@ const renderAdminProducts = (products = []) => {
         payload.basePrice = basePrice;
       }
 
+      setButtonBusy(updateBtn, true, 'Updating...');
       try {
-        await fetchJSON(`${apiBase}/products/${product._id}`, {
+        await fetchJSON(`/products/${product._id}`, {
           method: 'PUT',
           body: JSON.stringify(payload),
         });
-        if (message) {
-          message.textContent = 'Updated.';
-        }
+        setFormMessage(message, { message: 'Updated.', state: 'success' });
+        showToast({
+          type: 'info',
+          title: 'Product updated',
+          message: `${name} has been updated.`,
+        });
         await loadAdminProducts();
       } catch (error) {
-        if (message) {
-          message.textContent = error.message;
-        }
+        setFormMessage(message, {
+          message: error.message || 'Unable to update product.',
+          state: 'error',
+        });
+        showToast({
+          type: 'error',
+          title: 'Update failed',
+          message: error.message || 'Please try again.',
+        });
+      } finally {
+        setButtonBusy(updateBtn, false);
       }
     });
 
@@ -128,15 +240,35 @@ const renderAdminProducts = (products = []) => {
       if (!confirm(`Delete "${product.name}"?`)) {
         return;
       }
+      setButtonBusy(deleteBtn, true, 'Deleting...');
       try {
-        await fetchJSON(`${apiBase}/products/${product._id}`, { method: 'DELETE' });
+        await fetchJSON(`/products/${product._id}`, { method: 'DELETE' });
+        showToast({
+          type: 'info',
+          title: 'Product deleted',
+          message: `${product.name} was removed.`,
+        });
         await loadAdminProducts();
       } catch (error) {
-        if (message) {
-          message.textContent = error.message;
-        }
+        setFormMessage(message, {
+          message: error.message || 'Unable to delete product.',
+          state: 'error',
+        });
+        showToast({
+          type: 'error',
+          title: 'Delete failed',
+          message: error.message || 'Please try again.',
+        });
+      } finally {
+        setButtonBusy(deleteBtn, false);
       }
     });
+
+    card.appendChild(head);
+    card.appendChild(grid);
+    card.appendChild(descriptionField.labelEl);
+    card.appendChild(actions);
+    card.appendChild(message);
 
     adminProductsList.appendChild(card);
   });
@@ -146,12 +278,18 @@ export const loadAdminProducts = async () => {
   if (!adminProductsList) {
     return;
   }
-  adminProductsList.innerHTML = '';
+  setStatusMessage(adminProductsList, {
+    state: 'loading',
+    message: 'Loading products...',
+  });
   try {
-    const data = await fetchJSON(`${apiBase}/products`);
+    const data = await fetchJSON('/products');
     renderAdminProducts(data.products || []);
   } catch (error) {
-    adminProductsList.innerHTML = `<p>${error.message}</p>`;
+    setStatusMessage(adminProductsList, {
+      state: 'error',
+      message: error.message || 'Unable to load products.',
+    });
   }
 };
 
@@ -162,7 +300,10 @@ const renderAdminOrders = (orders = []) => {
   adminOrdersList.innerHTML = '';
 
   if (!orders.length) {
-    adminOrdersList.innerHTML = '<p>No orders found.</p>';
+    setStatusMessage(adminOrdersList, {
+      state: 'empty',
+      message: 'No orders found.',
+    });
     return;
   }
 
@@ -172,64 +313,102 @@ const renderAdminOrders = (orders = []) => {
   orders.forEach((order) => {
     const card = document.createElement('div');
     card.className = 'admin-order-card';
-    const items = order.items
-      .map((item) => `${item.quantity}x ${item.name} (${item.size})`)
-      .join(', ');
+
+    const meta = document.createElement('div');
+    meta.className = 'admin-order-meta';
+
+    const status = document.createElement('span');
+    status.textContent = `Status: ${order.status}`;
+
+    const total = document.createElement('span');
+    total.textContent = `Total: ${formatCurrency(order.total)}`;
+
     const userLabel =
       order.user && typeof order.user === 'object'
         ? order.user.username || order.user._id
         : order.user;
+    const user = document.createElement('span');
+    user.textContent = `User: ${userLabel || 'Unknown'}`;
 
-    card.innerHTML = `
-      <div class="admin-order-meta">
-        <span>Status: ${order.status}</span>
-        <span>Total: ${formatCurrency(order.total)}</span>
-        <span>User: ${userLabel}</span>
-      </div>
-      <div>${items}</div>
-      <div class="admin-order-meta">
-        Pickup: ${order.pickupTime ? new Date(order.pickupTime).toLocaleString() : 'ASAP'}
-      </div>
-      <div class="admin-order-actions">
-        <select class="admin-status-select">
-          ${statuses
-            .map(
-              (status) =>
-                `<option value="${status}" ${status === order.status ? 'selected' : ''}>${status.replace(
-                  '_',
-                  ' '
-                )}</option>`
-            )
-            .join('')}
-        </select>
-        <button type="button" class="primary" data-action="status">Update status</button>
-        ${activeUser && activeUser.role === 'admin' ? '<button type="button" class="ghost" data-action="delete">Delete</button>' : ''}
-      </div>
-      <p class="form-message admin-inline-message"></p>
-    `;
+    meta.appendChild(status);
+    meta.appendChild(total);
+    meta.appendChild(user);
 
-    const message = card.querySelector('.admin-inline-message');
-    const statusSelect = card.querySelector('.admin-status-select');
-    const statusBtn = card.querySelector('[data-action="status"]');
-    const deleteBtn = card.querySelector('[data-action="delete"]');
+    const items = document.createElement('div');
+    const itemsText = (order.items || [])
+      .map((item) => `${item.quantity}x ${item.name} (${item.size})`)
+      .join(', ');
+    items.textContent = itemsText || 'No items listed.';
+
+    const pickup = document.createElement('div');
+    pickup.className = 'admin-order-meta';
+    const pickupText = order.pickupTime
+      ? new Date(order.pickupTime).toLocaleString()
+      : 'ASAP';
+    pickup.textContent = `Pickup: ${pickupText}`;
+
+    const actions = document.createElement('div');
+    actions.className = 'admin-order-actions';
+
+    const statusSelect = document.createElement('select');
+    statusSelect.className = 'admin-status-select';
+    statuses.forEach((statusValue) => {
+      const option = document.createElement('option');
+      option.value = statusValue;
+      option.textContent = statusValue.replace('_', ' ');
+      if (statusValue === order.status) {
+        option.selected = true;
+      }
+      statusSelect.appendChild(option);
+    });
+
+    const statusBtn = document.createElement('button');
+    statusBtn.type = 'button';
+    statusBtn.className = 'primary';
+    statusBtn.textContent = 'Update status';
+
+    actions.appendChild(statusSelect);
+    actions.appendChild(statusBtn);
+
+    let deleteBtn = null;
+    if (activeUser && activeUser.role === 'admin') {
+      deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'ghost';
+      deleteBtn.textContent = 'Delete';
+      actions.appendChild(deleteBtn);
+    }
+
+    const message = document.createElement('p');
+    message.className = 'form-message admin-inline-message';
 
     statusBtn.addEventListener('click', async () => {
-      if (message) {
-        message.textContent = '';
-      }
+      setFormMessage(message, { message: '' });
+      setButtonBusy(statusBtn, true, 'Updating...');
       try {
-        await fetchJSON(`${apiBase}/orders/${order._id}`, {
+        await fetchJSON(`/orders/${order._id}`, {
           method: 'PUT',
           body: JSON.stringify({ status: statusSelect.value }),
         });
-        if (message) {
-          message.textContent = 'Status updated.';
-        }
+        setFormMessage(message, { message: 'Status updated.', state: 'success' });
+        showToast({
+          type: 'info',
+          title: 'Order updated',
+          message: `Order marked ${statusSelect.value}.`,
+        });
         await loadAdminOrders();
       } catch (error) {
-        if (message) {
-          message.textContent = error.message;
-        }
+        setFormMessage(message, {
+          message: error.message || 'Unable to update status.',
+          state: 'error',
+        });
+        showToast({
+          type: 'error',
+          title: 'Update failed',
+          message: error.message || 'Please try again.',
+        });
+      } finally {
+        setButtonBusy(statusBtn, false);
       }
     });
 
@@ -238,16 +417,36 @@ const renderAdminOrders = (orders = []) => {
         if (!confirm('Delete this order?')) {
           return;
         }
+        setButtonBusy(deleteBtn, true, 'Deleting...');
         try {
-          await fetchJSON(`${apiBase}/orders/${order._id}`, { method: 'DELETE' });
+          await fetchJSON(`/orders/${order._id}`, { method: 'DELETE' });
+          showToast({
+            type: 'info',
+            title: 'Order deleted',
+            message: 'The order has been removed.',
+          });
           await loadAdminOrders();
         } catch (error) {
-          if (message) {
-            message.textContent = error.message;
-          }
+          setFormMessage(message, {
+            message: error.message || 'Unable to delete order.',
+            state: 'error',
+          });
+          showToast({
+            type: 'error',
+            title: 'Delete failed',
+            message: error.message || 'Please try again.',
+          });
+        } finally {
+          setButtonBusy(deleteBtn, false);
         }
       });
     }
+
+    card.appendChild(meta);
+    card.appendChild(items);
+    card.appendChild(pickup);
+    card.appendChild(actions);
+    card.appendChild(message);
 
     adminOrdersList.appendChild(card);
   });
@@ -257,12 +456,18 @@ export const loadAdminOrders = async () => {
   if (!adminOrdersList) {
     return;
   }
-  adminOrdersList.innerHTML = '';
+  setStatusMessage(adminOrdersList, {
+    state: 'loading',
+    message: 'Loading orders...',
+  });
   try {
-    const data = await fetchJSON(`${apiBase}/orders/all`);
+    const data = await fetchJSON('/orders/all');
     renderAdminOrders(data.orders || []);
   } catch (error) {
-    adminOrdersList.innerHTML = `<p>${error.message}</p>`;
+    setStatusMessage(adminOrdersList, {
+      state: 'error',
+      message: error.message || 'Unable to load orders.',
+    });
   }
 };
 
@@ -270,14 +475,22 @@ export const bindAdminEvents = () => {
   if (adminCreateProductForm) {
     adminCreateProductForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      if (adminProductMessage) {
-        adminProductMessage.textContent = '';
-      }
+      setFormMessage(adminProductMessage, { message: '' });
 
       const formData = new FormData(adminCreateProductForm);
+      const name = formData.get('name')?.toString().trim();
+      const category = formData.get('category')?.toString().trim();
+      if (!name || !category) {
+        setFormMessage(adminProductMessage, {
+          message: 'Name and category are required.',
+          state: 'error',
+        });
+        return;
+      }
+
       const payload = {
-        name: formData.get('name')?.toString().trim(),
-        category: formData.get('category')?.toString().trim(),
+        name,
+        category,
         description: formData.get('description')?.toString().trim() || '',
         imageUrl: formData.get('imageUrl')?.toString().trim() || '',
         isAvailable: formData.get('isAvailable') === 'on',
@@ -301,35 +514,54 @@ export const bindAdminEvents = () => {
           }
           payload.sizes = parsed;
         } catch (error) {
-          if (adminProductMessage) {
-            adminProductMessage.textContent = 'Sizes must be valid JSON array.';
-          }
+          setFormMessage(adminProductMessage, {
+            message: 'Sizes must be a valid JSON array.',
+            state: 'error',
+          });
           return;
         }
       }
 
       const hasPrice = payload.price !== undefined || payload.basePrice !== undefined;
       if (!hasPrice && (!payload.sizes || payload.sizes.length === 0)) {
-        if (adminProductMessage) {
-          adminProductMessage.textContent = 'Provide price/base price or sizes.';
-        }
+        setFormMessage(adminProductMessage, {
+          message: 'Provide price/base price or sizes.',
+          state: 'error',
+        });
         return;
       }
 
+      const submitButton = adminCreateProductForm.querySelector('button[type="submit"]');
+      setButtonBusy(submitButton, true, 'Creating...');
+
       try {
-        await fetchJSON(`${apiBase}/products`, {
+        await fetchJSON('/products', {
           method: 'POST',
           body: JSON.stringify(payload),
         });
-        if (adminProductMessage) {
-          adminProductMessage.textContent = 'Product created.';
-        }
+        setFormMessage(adminProductMessage, {
+          message: 'Product created.',
+          state: 'success',
+        });
+        showToast({
+          type: 'info',
+          title: 'Product created',
+          message: `${payload.name} is now available.`,
+        });
         adminCreateProductForm.reset();
         await loadAdminProducts();
       } catch (error) {
-        if (adminProductMessage) {
-          adminProductMessage.textContent = error.message;
-        }
+        setFormMessage(adminProductMessage, {
+          message: error.message || 'Unable to create product.',
+          state: 'error',
+        });
+        showToast({
+          type: 'error',
+          title: 'Create failed',
+          message: error.message || 'Please try again.',
+        });
+      } finally {
+        setButtonBusy(submitButton, false);
       }
     });
   }

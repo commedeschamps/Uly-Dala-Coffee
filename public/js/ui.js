@@ -1,6 +1,65 @@
 import { showPasswordBtn, togglePasswordIcon, passwordInput } from './dom.js';
 import { redirectTo } from './navigation.js';
 
+export const setStatusMessage = (container, { state = 'info', message = '' } = {}) => {
+  if (!container) {
+    return;
+  }
+  container.innerHTML = '';
+  container.dataset.state = state;
+  container.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
+
+  if (!message) {
+    return;
+  }
+
+  const status = document.createElement('p');
+  status.className = `status-message status-message--${state}`;
+  status.textContent = message;
+  status.setAttribute('role', state === 'error' ? 'alert' : 'status');
+  status.setAttribute('aria-live', state === 'error' ? 'assertive' : 'polite');
+  container.appendChild(status);
+};
+
+export const setFormMessage = (element, { message = '', state = 'info' } = {}) => {
+  if (!element) {
+    return;
+  }
+  element.textContent = message;
+  element.classList.toggle('is-error', state === 'error');
+  element.classList.toggle('is-success', state === 'success');
+  element.classList.toggle('is-info', state === 'info');
+
+  if (message) {
+    element.setAttribute('role', state === 'error' ? 'alert' : 'status');
+    element.setAttribute('aria-live', state === 'error' ? 'assertive' : 'polite');
+  } else {
+    element.removeAttribute('role');
+    element.removeAttribute('aria-live');
+  }
+};
+
+export const setButtonBusy = (button, isBusy, busyLabel = 'Working...') => {
+  if (!button) {
+    return;
+  }
+  if (isBusy) {
+    if (!button.dataset.label) {
+      button.dataset.label = button.textContent.trim();
+    }
+    button.textContent = busyLabel;
+    button.disabled = true;
+    button.setAttribute('aria-busy', 'true');
+  } else {
+    if (button.dataset.label) {
+      button.textContent = button.dataset.label;
+      delete button.dataset.label;
+    }
+    button.disabled = false;
+    button.removeAttribute('aria-busy');
+  }
+};
+
 export const togglePasswordVisibility = (event) => {
   const trigger = event?.currentTarget || event?.target;
   const scope = trigger?.closest('label') || document;
@@ -18,12 +77,16 @@ export const togglePasswordVisibility = (event) => {
   }
   if (trigger && trigger.classList && trigger.classList.contains('show-password')) {
     trigger.textContent = isHidden ? 'Hide Password' : 'Show Password';
+    trigger.setAttribute('aria-pressed', String(isHidden));
   }
 };
 
 export const bindPasswordToggle = () => {
   if (showPasswordBtn.length) {
-    showPasswordBtn.forEach((btn) => btn.addEventListener('click', togglePasswordVisibility));
+    showPasswordBtn.forEach((btn) => {
+      btn.setAttribute('aria-pressed', 'false');
+      btn.addEventListener('click', togglePasswordVisibility);
+    });
   }
   if (togglePasswordIcon) {
     togglePasswordIcon.addEventListener('click', togglePasswordVisibility);
@@ -44,7 +107,7 @@ const toastIcons = {
   `,
   error: `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" stroke-width="0" fill="currentColor" stroke="currentColor" class="toast-icon">
-      <path d="M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c-9.4 9.4-9.4 24.6 0 33.9l47 47-47 47c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l47-47 47 47c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-47-47 47-47c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-47 47-47-47c-9.4-9.4-24.6-9.4-33.9 0z"></path>
+      <path d="M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM175 175c-9.4 9.4-9.4 24.6 0 33.9l47 47-47 47c-9.4 9.4-9.4 24.6 0 33.9s24.6 9.4 33.9 0l47-47 47 47c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-47-47 47-47c-9.4-9.4-9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-47 47-47-47c-9.4-9.4-24.6-9.4-33.9 0z"></path>
     </svg>
   `,
 };
@@ -58,6 +121,8 @@ const ensureToastContainer = () => {
     toastContainer = document.createElement('div');
     toastContainer.id = 'toastContainer';
     toastContainer.className = 'toast-container';
+    toastContainer.setAttribute('aria-live', 'polite');
+    toastContainer.setAttribute('aria-atomic', 'true');
     document.body.appendChild(toastContainer);
   }
   return toastContainer;
@@ -118,6 +183,8 @@ const ensureCartToastContainer = () => {
     cartToastContainer = document.createElement('div');
     cartToastContainer.id = 'cartToastContainer';
     cartToastContainer.className = 'cart-toast-container';
+    cartToastContainer.setAttribute('aria-live', 'polite');
+    cartToastContainer.setAttribute('aria-atomic', 'true');
     document.body.appendChild(cartToastContainer);
   }
   return cartToastContainer;
@@ -135,6 +202,7 @@ export const showCartToast = ({ name = 'Item', price = '' } = {}) => {
   const container = ensureCartToastContainer();
   const toast = document.createElement('div');
   toast.className = 'cart-toast';
+  toast.setAttribute('role', 'status');
   toast.innerHTML = `
     <svg class="toast-wave" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
       <path d="${toastWavePath}" fill-opacity="1"></path>
@@ -142,7 +210,7 @@ export const showCartToast = ({ name = 'Item', price = '' } = {}) => {
     <div class="cart-icon">
       <div class="icon-cart-box">
         <svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 576 512">
-          <path fill="#000" d="M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"></path>
+          <path fill="currentColor" d="M0 24C0 10.7 10.7 0 24 0H69.5c22 0 41.5 12.8 50.6 32h411c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3H170.7l5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5H488c13.3 0 24 10.7 24 24s-10.7 24-24 24H199.7c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5H24C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z"></path>
         </svg>
       </div>
     </div>
@@ -151,7 +219,7 @@ export const showCartToast = ({ name = 'Item', price = '' } = {}) => {
         <span class="cart-title">Added to cart!</span>
         <button type="button" class="cart-close" aria-label="Dismiss">
           <svg xmlns="http://www.w3.org/2000/svg" height="15" width="15" viewBox="0 0 384 512">
-            <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c12.5 12.5 12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"></path>
+            <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"></path>
           </svg>
         </button>
       </div>

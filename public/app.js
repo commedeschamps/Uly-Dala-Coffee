@@ -1,12 +1,12 @@
-import { apiBase } from './js/config.js';
 import { fetchJSON } from './js/api.js';
 import { getToken, clearToken } from './js/token.js';
+import { setTokenState } from './js/state.js';
 import { updateUserUI, bindAuthEvents } from './js/auth.js';
 import { bindOrderEvents, loadOrders } from './js/orders.js';
 import { loadProducts } from './js/products.js';
 import { loadAdminProducts, loadAdminOrders, bindAdminEvents } from './js/admin.js';
 import { renderCart, bindCartEvents } from './js/cart.js';
-import { bindPasswordToggle, setupGallerySlider } from './js/ui.js';
+import { bindPasswordToggle, setupGallerySlider, showToast } from './js/ui.js';
 import { redirectTo } from './js/navigation.js';
 import {
   onOrders,
@@ -18,6 +18,27 @@ import {
   onBarista,
 } from './js/page.js';
 
+let lastUnauthorizedAt = 0;
+
+const handleUnauthorized = (event) => {
+  const now = Date.now();
+  if (now - lastUnauthorizedAt < 1500) {
+    return;
+  }
+  lastUnauthorizedAt = now;
+  const message = event?.detail?.message || 'Session expired. Please sign in again.';
+  clearToken();
+  updateUserUI(null);
+  showToast({
+    type: 'error',
+    title: 'Session expired',
+    message,
+  });
+  if (onOrders || onCheckout || onAccount || onAdmin || onBarista) {
+    redirectTo('/auth.html');
+  }
+};
+
 const init = async () => {
   bindPasswordToggle();
   bindAuthEvents();
@@ -25,7 +46,10 @@ const init = async () => {
   bindAdminEvents();
   bindCartEvents();
 
+  window.addEventListener('auth:unauthorized', handleUnauthorized);
+
   const token = getToken();
+  setTokenState(token);
   updateUserUI(null, { assumeLoggedIn: Boolean(token) });
   renderCart();
 
@@ -40,7 +64,7 @@ const init = async () => {
 
   if (token) {
     try {
-      const data = await fetchJSON(`${apiBase}/users/profile`);
+      const data = await fetchJSON('/users/profile');
       updateUserUI(data.user);
       if (onAdmin && data.user.role !== 'admin') {
         redirectTo('/dashboard.html');
@@ -51,9 +75,18 @@ const init = async () => {
         return;
       }
     } catch (error) {
-      clearToken();
-      updateUserUI(null);
+      if (Date.now() - lastUnauthorizedAt > 1500) {
+        clearToken();
+        updateUserUI(null);
+        showToast({
+          type: 'error',
+          title: 'Unable to verify session',
+          message: error.message || 'Please sign in again.',
+        });
+      }
     }
+  } else {
+    updateUserUI(null);
   }
 
   if (onProducts) {

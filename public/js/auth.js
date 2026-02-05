@@ -17,22 +17,30 @@ import {
   currentRole,
   priorityCheckbox,
 } from './dom.js';
-import { apiBase } from './config.js';
 import { fetchJSON } from './api.js';
 import { getToken, setToken, clearToken } from './token.js';
-import { setActiveUser } from './state.js';
+import { setActiveUser, getActiveUser } from './state.js';
 import { loadOrders } from './orders.js';
 import { onAuth, onOrders, onAccount, onCheckout, onAdmin, onBarista } from './page.js';
 import { redirectTo } from './navigation.js';
 import { clearCart } from './cart.js';
+import { setFormMessage, setButtonBusy, showToast } from './ui.js';
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const getSubmitButton = (form) => form?.querySelector('button[type="submit"]');
 
 export const updateUserUI = (user, options = {}) => {
   setActiveUser(user);
   const isLoggedIn = Boolean(user) || Boolean(options.assumeLoggedIn);
   const isPending = Boolean(options.assumeLoggedIn) && !user;
+
   if (rootEl) {
     rootEl.classList.toggle('auth-pending', isPending);
+    rootEl.classList.toggle('auth-ready', !isPending);
+    rootEl.classList.toggle('auth-logged-in', isLoggedIn && !isPending);
   }
+
   if (guestLinks.length) {
     guestLinks.forEach((link) => link.classList.toggle('is-hidden', isLoggedIn));
   }
@@ -45,14 +53,16 @@ export const updateUserUI = (user, options = {}) => {
     baristaLinks.forEach((link) => link.classList.toggle('is-hidden', !showBarista));
   }
   if (refreshOrdersBtn) {
-    refreshOrdersBtn.disabled = !isLoggedIn;
+    refreshOrdersBtn.disabled = !isLoggedIn || isPending;
   }
   if (logoutBtn) {
-    logoutBtn.disabled = !isLoggedIn;
+    logoutBtn.disabled = !isLoggedIn || isPending;
   }
+
   if (!user) {
     if (currentUser) {
       currentUser.textContent = isPending ? '' : 'Not signed in';
+      currentUser.setAttribute('aria-live', 'polite');
     }
     if (currentRole) {
       currentRole.textContent = isPending ? '' : 'Role: guest';
@@ -73,6 +83,7 @@ export const updateUserUI = (user, options = {}) => {
 
   if (currentUser) {
     currentUser.textContent = `${user.username} (${user.email})`;
+    currentUser.setAttribute('aria-live', 'polite');
   }
   if (currentRole) {
     currentRole.textContent = `Role: ${user.role}`;
@@ -91,33 +102,59 @@ export const bindAuthEvents = () => {
   if (registerForm) {
     registerForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      if (registerMessage) {
-        registerMessage.textContent = '';
-      }
+      setFormMessage(registerMessage, { message: '' });
 
       const formData = new FormData(registerForm);
-      const password = formData.get('password');
-      const passwordValid = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password);
+      const username = formData.get('username')?.toString().trim();
+      const email = formData.get('email')?.toString().trim();
+      const password = formData.get('password')?.toString() || '';
+      const role = formData.get('role')?.toString() || 'user';
 
+      if (!username || username.length < 3) {
+        setFormMessage(registerMessage, {
+          message: 'Username must be at least 3 characters long.',
+          state: 'error',
+        });
+        return;
+      }
+      if (!email || !emailPattern.test(email)) {
+        setFormMessage(registerMessage, {
+          message: 'Enter a valid email address.',
+          state: 'error',
+        });
+        return;
+      }
+      const passwordValid = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password);
       if (!passwordValid) {
-        if (registerMessage) {
-          registerMessage.textContent = 'Password must be at least 8 characters and include a number.';
-        }
+        setFormMessage(registerMessage, {
+          message: 'Password must be at least 8 characters and include a number.',
+          state: 'error',
+        });
         return;
       }
 
+      const submitButton = getSubmitButton(registerForm);
+      setButtonBusy(submitButton, true, 'Creating...');
+
       try {
-        const payload = Object.fromEntries(formData.entries());
-        const data = await fetchJSON(`${apiBase}/auth/register`, {
+        const payload = { username, email, password, role };
+        const data = await fetchJSON('/auth/register', {
           method: 'POST',
           body: JSON.stringify(payload),
+          skipAuth: true,
         });
 
         setToken(data.token);
         updateUserUI(data.user);
-        if (registerMessage) {
-          registerMessage.textContent = 'Registration successful.';
-        }
+        setFormMessage(registerMessage, {
+          message: 'Registration successful.',
+          state: 'success',
+        });
+        showToast({
+          type: 'info',
+          title: 'Account created',
+          message: 'Welcome to Uly Dala Coffee.',
+        });
         registerForm.reset();
         if (onAuth) {
           redirectTo('/account.html');
@@ -127,9 +164,17 @@ export const bindAuthEvents = () => {
           await loadOrders();
         }
       } catch (error) {
-        if (registerMessage) {
-          registerMessage.textContent = error.message;
-        }
+        setFormMessage(registerMessage, {
+          message: error.message || 'Unable to register.',
+          state: 'error',
+        });
+        showToast({
+          type: 'error',
+          title: 'Registration failed',
+          message: error.message || 'Please try again.',
+        });
+      } finally {
+        setButtonBusy(submitButton, false);
       }
     });
   }
@@ -137,22 +182,49 @@ export const bindAuthEvents = () => {
   if (loginForm) {
     loginForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      if (loginMessage) {
-        loginMessage.textContent = '';
+      setFormMessage(loginMessage, { message: '' });
+
+      const formData = new FormData(loginForm);
+      const email = formData.get('email')?.toString().trim();
+      const password = formData.get('password')?.toString() || '';
+
+      if (!email || !emailPattern.test(email)) {
+        setFormMessage(loginMessage, {
+          message: 'Enter a valid email address.',
+          state: 'error',
+        });
+        return;
+      }
+      if (!password) {
+        setFormMessage(loginMessage, {
+          message: 'Please enter your password.',
+          state: 'error',
+        });
+        return;
       }
 
+      const submitButton = getSubmitButton(loginForm);
+      setButtonBusy(submitButton, true, 'Signing in...');
+
       try {
-        const payload = Object.fromEntries(new FormData(loginForm).entries());
-        const data = await fetchJSON(`${apiBase}/auth/login`, {
+        const payload = { email, password };
+        const data = await fetchJSON('/auth/login', {
           method: 'POST',
           body: JSON.stringify(payload),
+          skipAuth: true,
         });
 
         setToken(data.token);
         updateUserUI(data.user);
-        if (loginMessage) {
-          loginMessage.textContent = 'Login successful.';
-        }
+        setFormMessage(loginMessage, {
+          message: 'Login successful.',
+          state: 'success',
+        });
+        showToast({
+          type: 'info',
+          title: 'Welcome back',
+          message: 'You are signed in.',
+        });
         loginForm.reset();
         if (onAuth) {
           redirectTo('/account.html');
@@ -162,9 +234,17 @@ export const bindAuthEvents = () => {
           await loadOrders();
         }
       } catch (error) {
-        if (loginMessage) {
-          loginMessage.textContent = error.message;
-        }
+        setFormMessage(loginMessage, {
+          message: error.message || 'Unable to sign in.',
+          state: 'error',
+        });
+        showToast({
+          type: 'error',
+          title: 'Login failed',
+          message: error.message || 'Please try again.',
+        });
+      } finally {
+        setButtonBusy(submitButton, false);
       }
     });
   }
@@ -172,35 +252,83 @@ export const bindAuthEvents = () => {
   if (profileForm) {
     profileForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      if (profileMessage) {
-        profileMessage.textContent = '';
-      }
+      setFormMessage(profileMessage, { message: '' });
 
       if (!getToken()) {
-        if (profileMessage) {
-          profileMessage.textContent = 'Please log in first.';
-        }
+        setFormMessage(profileMessage, {
+          message: 'Please log in first.',
+          state: 'error',
+        });
         if (onOrders || onAccount || onCheckout) {
           redirectTo('/auth.html');
         }
         return;
       }
 
-      const payload = Object.fromEntries(new FormData(profileForm).entries());
+      const formData = new FormData(profileForm);
+      const username = formData.get('username')?.toString().trim();
+      const email = formData.get('email')?.toString().trim();
+
+      const payload = {};
+      if (username) {
+        if (username.length < 3) {
+          setFormMessage(profileMessage, {
+            message: 'Username must be at least 3 characters long.',
+            state: 'error',
+          });
+          return;
+        }
+        payload.username = username;
+      }
+      if (email) {
+        if (!emailPattern.test(email)) {
+          setFormMessage(profileMessage, {
+            message: 'Enter a valid email address.',
+            state: 'error',
+          });
+          return;
+        }
+        payload.email = email;
+      }
+
+      if (!Object.keys(payload).length) {
+        setFormMessage(profileMessage, {
+          message: 'Update at least one field before saving.',
+          state: 'error',
+        });
+        return;
+      }
+
+      const submitButton = getSubmitButton(profileForm);
+      setButtonBusy(submitButton, true, 'Updating...');
 
       try {
-        const data = await fetchJSON(`${apiBase}/users/profile`, {
+        const data = await fetchJSON('/users/profile', {
           method: 'PUT',
           body: JSON.stringify(payload),
         });
         updateUserUI(data.user);
-        if (profileMessage) {
-          profileMessage.textContent = 'Profile updated.';
-        }
+        setFormMessage(profileMessage, {
+          message: 'Profile updated.',
+          state: 'success',
+        });
+        showToast({
+          type: 'info',
+          title: 'Profile updated',
+          message: 'Your details are saved.',
+        });
       } catch (error) {
-        if (profileMessage) {
-          profileMessage.textContent = error.message;
-        }
+        setFormMessage(profileMessage, {
+          message: error.message || 'Unable to update profile.',
+          state: 'error',
+        });
+        showToast({
+          type: 'error',
+          title: 'Update failed',
+          message: error.message || 'Please try again.',
+        });
+      } finally {
+        setButtonBusy(submitButton, false);
       }
     });
   }
@@ -210,12 +338,39 @@ export const bindAuthEvents = () => {
       clearToken();
       updateUserUI(null);
       if (ordersList) {
-        ordersList.innerHTML = '<p>You have logged out.</p>';
+        ordersList.textContent = '';
       }
       clearCart();
+      showToast({
+        type: 'info',
+        title: 'Signed out',
+        message: 'You have been logged out.',
+      });
       if (onOrders || onCheckout || onAccount || onAdmin || onBarista) {
         redirectTo('/auth.html');
       }
+    });
+  }
+
+  if (refreshOrdersBtn) {
+    refreshOrdersBtn.addEventListener('click', async () => {
+      const user = getActiveUser();
+      if (!user) {
+        showToast({
+          type: 'error',
+          title: 'Login required',
+          message: 'Please sign in to refresh orders.',
+        });
+        if (onOrders || onAccount) {
+          redirectTo('/auth.html');
+        }
+        return;
+      }
+      if (!onOrders) {
+        redirectTo('/dashboard.html');
+        return;
+      }
+      await loadOrders();
     });
   }
 };
