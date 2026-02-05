@@ -1,0 +1,11 @@
+.page--center {
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.page--center .card {
+  max-width: 480px;
+  animation: rise 0.35s ease both;
+}

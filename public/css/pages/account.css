@@ -1,0 +1,37 @@
+.account-grid {
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+.account-card {
+  display: grid;
+  gap: 16px;
+}
+
+.account-card .card-header {
+  margin-bottom: 0;
+}
+
+.account-form {
+  display: grid;
+  gap: 14px;
+}
+
+.account-form-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.account-card {
+  animation: rise 0.35s ease both;
+}
+
+@media (max-width: 900px) {
+  .account-form-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
