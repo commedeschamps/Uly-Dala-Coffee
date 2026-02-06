@@ -1,7 +1,14 @@
 import {
   registerForm,
   loginForm,
+  forgotPasswordForm,
+  resetPasswordForm,
   profileForm,
+  loginCard,
+  registerCard,
+  authDivider,
+  resetPasswordCard,
+  resetPasswordHint,
   ordersList,
   refreshOrdersBtn,
   logoutBtn,
@@ -12,6 +19,8 @@ import {
   userBadge,
   registerMessage,
   loginMessage,
+  forgotPasswordMessage,
+  resetPasswordMessage,
   profileMessage,
   currentUser,
   currentRole,
@@ -27,8 +36,39 @@ import { clearCart } from './cart.js';
 import { setFormMessage, setButtonBusy, showToast } from './ui.js';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+const resetParams = new URLSearchParams(window.location.search);
+const resetTokenFromUrl =
+  resetParams.get('mode') === 'reset' ? (resetParams.get('token') || '').trim() : '';
 
 const getSubmitButton = (form) => form?.querySelector('button[type="submit"]');
+
+const setupResetModeUI = () => {
+  if (!onAuth) {
+    return;
+  }
+  const isResetMode = Boolean(resetTokenFromUrl);
+  const authGrid = document.querySelector('.auth-grid--stacked');
+
+  if (resetPasswordCard) {
+    resetPasswordCard.classList.toggle('is-hidden', !isResetMode);
+  }
+  if (loginCard) {
+    loginCard.classList.toggle('is-hidden', isResetMode);
+  }
+  if (registerCard) {
+    registerCard.classList.toggle('is-hidden', isResetMode);
+  }
+  if (authDivider) {
+    authDivider.classList.toggle('is-hidden', isResetMode);
+  }
+  if (isResetMode && resetPasswordHint) {
+    resetPasswordHint.textContent = 'Set your new password to continue.';
+  }
+  if (authGrid) {
+    authGrid.classList.toggle('is-reset', isResetMode);
+  }
+};
 
 export const updateUserUI = (user, options = {}) => {
   setActiveUser(user);
@@ -99,6 +139,139 @@ export const updateUserUI = (user, options = {}) => {
 };
 
 export const bindAuthEvents = () => {
+  setupResetModeUI();
+
+  if (forgotPasswordForm) {
+    forgotPasswordForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      setFormMessage(forgotPasswordMessage, { message: '' });
+
+      const formData = new FormData(forgotPasswordForm);
+      const email = formData.get('email')?.toString().trim();
+
+      if (!email || !emailPattern.test(email)) {
+        setFormMessage(forgotPasswordMessage, {
+          message: 'Enter a valid email address.',
+          state: 'error',
+        });
+        return;
+      }
+
+      const submitButton = getSubmitButton(forgotPasswordForm);
+      setButtonBusy(submitButton, true, 'Sending...');
+
+      try {
+        const data = await fetchJSON('/auth/forgot-password', {
+          method: 'POST',
+          body: JSON.stringify({ email }),
+          skipAuth: true,
+          skipUnauthorized: true,
+        });
+        setFormMessage(forgotPasswordMessage, {
+          message:
+            data.message || 'If this email exists, you will receive a password reset link shortly.',
+          state: 'success',
+        });
+        showToast({
+          type: 'info',
+          title: 'Check your inbox',
+          message: 'If your account exists, we sent a reset link.',
+        });
+      } catch (error) {
+        setFormMessage(forgotPasswordMessage, {
+          message: error.message || 'Unable to send reset email.',
+          state: 'error',
+        });
+        showToast({
+          type: 'error',
+          title: 'Request failed',
+          message: error.message || 'Please try again.',
+        });
+      } finally {
+        setButtonBusy(submitButton, false);
+      }
+    });
+  }
+
+  if (resetPasswordForm) {
+    resetPasswordForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      setFormMessage(resetPasswordMessage, { message: '' });
+
+      if (!resetTokenFromUrl) {
+        setFormMessage(resetPasswordMessage, {
+          message: 'Reset token is missing. Open the link from your email again.',
+          state: 'error',
+        });
+        return;
+      }
+
+      const formData = new FormData(resetPasswordForm);
+      const password = formData.get('password')?.toString() || '';
+      const passwordConfirm = formData.get('passwordConfirm')?.toString() || '';
+
+      if (!passwordPattern.test(password)) {
+        setFormMessage(resetPasswordMessage, {
+          message: 'Password must be at least 8 characters and include a number.',
+          state: 'error',
+        });
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        setFormMessage(resetPasswordMessage, {
+          message: 'Passwords do not match.',
+          state: 'error',
+        });
+        return;
+      }
+
+      const submitButton = getSubmitButton(resetPasswordForm);
+      setButtonBusy(submitButton, true, 'Resetting...');
+
+      try {
+        const data = await fetchJSON(`/auth/reset-password/${encodeURIComponent(resetTokenFromUrl)}`, {
+          method: 'POST',
+          body: JSON.stringify({ password, passwordConfirm }),
+          skipAuth: true,
+          skipUnauthorized: true,
+        });
+
+        if (data.token) {
+          setToken(data.token);
+        }
+        updateUserUI(data.user || null);
+
+        setFormMessage(resetPasswordMessage, {
+          message: 'Password updated successfully.',
+          state: 'success',
+        });
+        showToast({
+          type: 'info',
+          title: 'Password reset',
+          message: 'You are now signed in.',
+        });
+        resetPasswordForm.reset();
+
+        if (onAuth) {
+          redirectTo('/account.html');
+        }
+      } catch (error) {
+        setFormMessage(resetPasswordMessage, {
+          message: error.message || 'Unable to reset password.',
+          state: 'error',
+        });
+        showToast({
+          type: 'error',
+          title: 'Reset failed',
+          message: error.message || 'Please request a new reset link.',
+        });
+      } finally {
+        setButtonBusy(submitButton, false);
+      }
+    });
+  }
+
   if (registerForm) {
     registerForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -124,7 +297,7 @@ export const bindAuthEvents = () => {
         });
         return;
       }
-      const passwordValid = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(password);
+      const passwordValid = passwordPattern.test(password);
       if (!passwordValid) {
         setFormMessage(registerMessage, {
           message: 'Password must be at least 8 characters and include a number.',

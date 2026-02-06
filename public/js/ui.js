@@ -1,4 +1,3 @@
-import { showPasswordBtn, togglePasswordIcon, passwordInput } from './dom.js';
 import { redirectTo } from './navigation.js';
 
 export const setStatusMessage = (container, { state = 'info', message = '' } = {}) => {
@@ -61,36 +60,32 @@ export const setButtonBusy = (button, isBusy, busyLabel = 'Working...') => {
 };
 
 export const togglePasswordVisibility = (event) => {
-  const trigger = event?.currentTarget || event?.target;
-  const scope = trigger?.closest('label') || document;
-  const input =
-    scope.querySelector('input[type="password"], input[type="text"]') || passwordInput;
-  if (!input) {
+  const trigger = event?.currentTarget;
+  const field = trigger?.closest('.password-field');
+  const input = field?.querySelector('input');
+
+  if (!trigger || !input) {
     return;
   }
-  const isHidden = input.type === 'password';
-  input.type = isHidden ? 'text' : 'password';
+  const shouldReveal = input.type === 'password';
+  input.type = shouldReveal ? 'text' : 'password';
 
-  const icon = scope.querySelector('#togglePasswordIcon') || togglePasswordIcon;
-  if (icon) {
-    icon.classList.toggle('fa-eye-slash', isHidden);
+  if (field) {
+    field.classList.toggle('is-visible', shouldReveal);
   }
-  if (trigger && trigger.classList && trigger.classList.contains('show-password')) {
-    trigger.textContent = isHidden ? 'Hide Password' : 'Show Password';
-    trigger.setAttribute('aria-pressed', String(isHidden));
-  }
+  trigger.setAttribute('aria-label', shouldReveal ? 'Hide password' : 'Show password');
+  trigger.setAttribute('aria-pressed', shouldReveal ? 'true' : 'false');
 };
 
 export const bindPasswordToggle = () => {
-  if (showPasswordBtn.length) {
-    showPasswordBtn.forEach((btn) => {
-      btn.setAttribute('aria-pressed', 'false');
-      btn.addEventListener('click', togglePasswordVisibility);
-    });
-  }
-  if (togglePasswordIcon) {
-    togglePasswordIcon.addEventListener('click', togglePasswordVisibility);
-  }
+  const passwordToggles = document.querySelectorAll('[data-password-toggle]');
+  if (!passwordToggles.length) return;
+
+  passwordToggles.forEach((toggle) => {
+    toggle.setAttribute('aria-label', 'Show password');
+    toggle.setAttribute('aria-pressed', 'false');
+    toggle.addEventListener('click', togglePasswordVisibility);
+  });
 
   window.togglePasswordVisibility = togglePasswordVisibility;
 };

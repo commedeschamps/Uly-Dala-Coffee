@@ -374,32 +374,6 @@
   color: #fff;
 }
 
-.footer {
-  max-width: var(--max);
-  margin: 0 auto;
-  padding: 0 var(--gutter);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  color: var(--muted);
-}
-
-.footer-links {
-  display: flex;
-  gap: 16px;
-  font-size: 0.85rem;
-}
-
-.footer-links a {
-  color: var(--muted);
-  transition: color 0.2s ease;
-}
-
-.footer-links a:hover {
-  color: var(--ink);
-}
-
 .hero,
 .feature-card,
 .menu-card,
@@ -439,8 +413,4 @@
     align-items: flex-start;
   }
 
-  .footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }

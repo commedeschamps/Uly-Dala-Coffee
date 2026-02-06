@@ -8,6 +8,11 @@
   align-items: stretch;
 }
 
+.auth-grid--stacked.is-reset {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+}
+
 .auth-divider {
   display: flex;
   align-items: center;
@@ -29,42 +34,119 @@
   background: var(--line);
 }
 
-.show-password {
-  align-self: flex-start;
+.password-field {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 50px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: rgba(58, 126, 124, 0.1);
+  color: var(--muted);
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--line-strong);
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--muted);
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
-.show-password:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
-
-#togglePasswordIcon {
-  align-self: flex-start;
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-
-#togglePasswordIcon.fa-eye-slash {
+.password-toggle:hover {
   color: var(--accent-2);
+  border-color: rgba(58, 126, 124, 0.32);
+  background: rgba(58, 126, 124, 0.16);
+}
+
+.password-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.password-toggle .icon-eye-off {
+  display: none;
+}
+
+.password-field.is-visible .password-toggle {
+  color: var(--accent-2);
+  border-color: rgba(58, 126, 124, 0.32);
+  background: rgba(58, 126, 124, 0.16);
+}
+
+.password-field.is-visible .password-toggle .icon-eye {
+  display: none;
+}
+
+.password-field.is-visible .password-toggle .icon-eye-off {
+  display: block;
 }
 
 .card {
   animation: rise 0.35s ease both;
+}
+
+.auth-subsection {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+}
+
+.auth-subsection h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-family: var(--font-sans);
+  letter-spacing: 0.02em;
+}
+
+#forgotPasswordForm {
+  display: grid;
+  gap: 10px;
+}
+
+#resetPasswordCard {
+  max-width: min(560px, 100%);
+  width: 100%;
+}
+
+#loginForm,
+#registerForm,
+#resetPasswordForm {
+  display: grid;
+  gap: 12px;
+}
+
+#loginForm .primary,
+#registerForm .primary,
+#resetPasswordForm .primary {
+  margin-top: 10px;
+  min-width: 190px;
+  min-height: 50px;
+  justify-self: start;
+}
+
+#forgotPasswordForm .ghost {
+  margin-top: 8px;
+  min-height: 44px;
+  justify-self: start;
 }
 
 @media (max-width: 900px) {
@@ -86,8 +168,21 @@
 }
 
 @media (max-width: 700px) {
-  .show-password {
-    padding: 6px 10px;
-    font-size: 0.62rem;
+  .password-field input {
+    padding-right: 46px;
+  }
+
+  .password-toggle {
+    width: 30px;
+    height: 30px;
+  }
+
+  #loginForm .primary,
+  #registerForm .primary,
+  #resetPasswordForm .primary,
+  #forgotPasswordForm .ghost {
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
   }
 }

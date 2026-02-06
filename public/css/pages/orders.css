@@ -1,11 +1,51 @@
+.orders-panel {
+  max-width: min(1680px, calc(100% - clamp(20px, 4vw, 72px)));
+  width: 100%;
+}
+
 .orders-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
+  gap: clamp(16px, 1.8vw, 24px);
+}
+
+.orders-overview-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 22px;
+  align-items: center;
+}
+
+.orders-overview-card .panel-header {
+  margin: 0;
+}
+
+.orders-overview-card > p {
+  margin: 0;
+  max-width: 72ch;
+}
+
+.orders-overview-card .hero-actions {
+  margin: 0;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  justify-content: flex-end;
+}
+
+.orders-list-card {
+  padding: clamp(22px, 2.1vw, 30px);
 }
 
 .orders-list {
   display: grid;
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  gap: clamp(14px, 1.4vw, 20px);
+  align-items: stretch;
+}
+
+.orders-list .status-message {
+  grid-column: 1 / -1;
 }
 
 .order-card {
@@ -16,6 +56,7 @@
   box-shadow: var(--shadow-soft);
   display: grid;
   gap: 10px;
+  height: 100%;
 }
 
 .order-meta {
@@ -29,7 +70,18 @@
 .order-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px 10px;
+  margin-top: auto;
+}
+
+.order-actions .primary,
+.order-actions .ghost,
+.order-actions select {
+  min-height: 42px;
+}
+
+.order-actions select {
+  min-width: 140px;
 }
 
 .orders-grid > .card,
@@ -37,8 +89,18 @@
   animation: rise 0.35s ease both;
 }
 
-@media (max-width: 1100px) {
-  .orders-grid {
+@media (max-width: 900px) {
+  .orders-overview-card {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-overview-card .hero-actions {
+    grid-column: auto;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .orders-list {
     grid-template-columns: 1fr;
   }
 }
