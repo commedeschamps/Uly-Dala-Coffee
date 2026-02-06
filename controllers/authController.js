@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { User } = require('../models/User');
-const { sendWelcomeEmail } = require('../services/emailService');
+const { sendWelcomeEmail, sendPasswordResetEmail } = require('../services/emailService');
 const AppError = require('../utils/appError');
 const asyncHandler = require('../utils/asyncHandler');
 
@@ -58,7 +59,69 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const email = req.body.email.toLowerCase();
+  const genericMessage =
+    'If an account with that email exists, a password reset link has been sent.';
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(200).json({
+      status: 'success',
+      message: genericMessage,
+    });
+  }
+
+  const resetToken = user.createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  const appUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+  const resetUrl = `${appUrl}/auth.html?mode=reset&token=${resetToken}`;
+  const expiresMinutes = Number(process.env.PASSWORD_RESET_EXPIRES_MINUTES || 15);
+
+  await sendPasswordResetEmail({
+    to: user.email,
+    name: user.username,
+    resetUrl,
+    expiresMinutes,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: genericMessage,
+  });
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const rawToken = req.params.token;
+  const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: new Date() },
+  });
+
+  if (!user) {
+    throw new AppError('Reset token is invalid or has expired', 400);
+  }
+
+  user.password = req.body.password;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  await user.save();
+
+  const token = createToken(user.id);
+
+  res.status(200).json({
+    status: 'success',
+    token,
+    user: user.toJSON(),
+  });
+});
+
 module.exports = {
   register,
   login,
+  forgotPassword,
+  resetPassword,
 };
