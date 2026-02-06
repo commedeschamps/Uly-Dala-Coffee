@@ -34,7 +34,9 @@ Create a `.env` file using the template below:
 cp .env.example .env
 ```
 
-Update `.env` with your MongoDB Atlas connection string and SMTP credentials.
+Update `.env` with your MongoDB Atlas connection string, SMTP credentials, and:
+- `APP_URL` (public base URL used in email links).
+- `PASSWORD_RESET_EXPIRES_MINUTES` (reset link lifetime, default `15`).
 
 ### 3) Run the server
 
@@ -69,6 +71,27 @@ Request body:
 {
   "email": "coffee@example.com",
   "password": "Pass1234"
+}
+```
+
+**POST /forgot-password** (also available as `/api/auth/forgot-password`)
+- Send a password reset link to the email if an account exists.
+
+Request body:
+```json
+{
+  "email": "coffee@example.com"
+}
+```
+
+**POST /reset-password/:token** (also available as `/api/auth/reset-password/:token`)
+- Reset password using token from email and return a new JWT.
+
+Request body:
+```json
+{
+  "password": "Pass1234",
+  "passwordConfirm": "Pass1234"
 }
 ```
 
