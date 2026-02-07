@@ -208,6 +208,7 @@
 
 .cart-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
@@ -235,15 +236,19 @@
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  margin-left: auto;
 }
 
 .qty-action {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 46px;
+  min-height: 42px;
+  justify-content: center;
   border-radius: 999px;
   border: 1px solid rgba(58, 48, 42, 0.22);
-  padding: 6px 12px;
+  padding: 0 10px;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
@@ -315,6 +320,34 @@
 
 .checkout-footer .primary {
   justify-self: start;
+  min-height: 54px;
+  padding-inline: 30px;
+  border-radius: 20px;
+  letter-spacing: 0.12em;
+  box-shadow:
+    0 8px 16px rgba(198, 118, 71, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(110, 60, 37, 0.24);
+}
+
+.checkout-footer .primary::after {
+  opacity: 0.42;
+}
+
+.checkout-footer .primary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 11px 20px rgba(198, 118, 71, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(110, 60, 37, 0.28);
+}
+
+.checkout-footer .primary:active {
+  transform: translateY(0);
+  box-shadow:
+    0 5px 10px rgba(198, 118, 71, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -1px 0 rgba(110, 60, 37, 0.2);
 }
 
 .checkout-note {
@@ -411,14 +444,20 @@
   .checkout-links {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 700px) {
   .cart-item {
     flex-direction: column;
     align-items: flex-start;
   }
 
+  .cart-item-actions {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 700px) {
   .checkout-header {
     flex-direction: column;
     align-items: flex-start;
