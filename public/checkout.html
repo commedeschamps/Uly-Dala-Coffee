@@ -104,7 +104,7 @@
                     <strong>Premium only</strong>
                   </div>
                 </div>
-                <section class="checkout-block">
+                <section class="checkout-block checkout-block--cart">
                   <div class="block-header">
                     <h3>Cart</h3>
                     <button type="button" class="ghost" id="clearCartBtn">Clear cart</button>
@@ -115,7 +115,7 @@
                     <strong id="cartTotal">0 ₸</strong>
                   </div>
                 </section>
-                <section class="checkout-block">
+                <section class="checkout-block checkout-block--details">
                   <div class="block-header">
                     <h3>Schedule & notes</h3>
                     <span class="block-hint">Optional</span>
@@ -147,18 +147,33 @@
               </form>
             </section>
 
-            <section class="card">
-              <div class="panel-header">
-                <h2>Need more items?</h2>
-                <p>Return to the menu to add more drinks.</p>
-              </div>
-              <p>
-                Your cart is saved automatically. You can keep adding items from the menu
-                and come back to checkout anytime.
-              </p>
-              <div class="hero-actions">
-                <a class="primary" href="/products.html">Browse menu</a>
-                <a class="ghost" href="/dashboard.html">View orders</a>
+            <section class="card checkout-aside">
+              <div class="aside-sticky">
+                <div class="panel-header">
+                  <h2>Need more items?</h2>
+                  <p>Return to the menu, add products, and continue checkout.</p>
+                </div>
+                <p>
+                  Your cart is saved automatically, so you can switch pages without losing items.
+                </p>
+                <ul class="checkout-benefits">
+                  <li>
+                    <strong>Fast pickup</strong>
+                    <span>Most orders are ready in about 10-15 minutes.</span>
+                  </li>
+                  <li>
+                    <strong>Live status</strong>
+                    <span>Track changes in real time from your orders page.</span>
+                  </li>
+                  <li>
+                    <strong>Priority prep</strong>
+                    <span>Premium users can enable priority during checkout.</span>
+                  </li>
+                </ul>
+                <div class="checkout-links">
+                  <a class="primary" href="/products.html">Browse menu</a>
+                  <a class="ghost" href="/dashboard.html">View orders</a>
+                </div>
               </div>
             </section>
           </div>

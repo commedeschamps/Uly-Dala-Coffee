@@ -53,21 +53,48 @@
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  border: 1px solid transparent;
-  background: rgba(58, 126, 124, 0.1);
-  color: var(--muted);
+  border: 1px solid rgba(58, 126, 124, 0.24);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(226, 243, 241, 0.84) 100%
+  );
+  color: #3b7371;
+  box-shadow:
+    0 7px 14px rgba(58, 126, 124, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68);
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .password-toggle:hover {
-  color: var(--accent-2);
-  border-color: rgba(58, 126, 124, 0.32);
-  background: rgba(58, 126, 124, 0.16);
+  color: #255f5d;
+  border-color: rgba(58, 126, 124, 0.46);
+  background: linear-gradient(
+    145deg,
+    rgba(236, 248, 247, 0.98) 0%,
+    rgba(198, 233, 231, 0.9) 100%
+  );
+  transform: translateY(-50%) scale(1.04);
+  box-shadow:
+    0 10px 16px rgba(58, 126, 124, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.password-toggle:active {
+  transform: translateY(-50%) scale(0.98);
+  box-shadow:
+    0 4px 8px rgba(58, 126, 124, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.64);
 }
 
 .password-toggle svg {
@@ -85,9 +112,16 @@
 }
 
 .password-field.is-visible .password-toggle {
-  color: var(--accent-2);
-  border-color: rgba(58, 126, 124, 0.32);
-  background: rgba(58, 126, 124, 0.16);
+  color: #215957;
+  border-color: rgba(58, 126, 124, 0.52);
+  background: linear-gradient(
+    145deg,
+    rgba(223, 243, 242, 0.98) 0%,
+    rgba(182, 226, 223, 0.9) 100%
+  );
+  box-shadow:
+    0 9px 15px rgba(58, 126, 124, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74);
 }
 
 .password-field.is-visible .password-toggle .icon-eye {
