@@ -1,22 +1,67 @@
 # Uly Dala Coffee
 
-A coffee shop ordering platform built with Node.js, Express, and MongoDB Atlas. Users can register, log in, manage their profile, and place coffee orders with real-time status updates. Staff roles (admin/barista) can manage order status and deletes, while premium users can submit priority orders.
+Uly Dala Coffee is a full-stack coffee ordering platform built with Node.js, Express, MongoDB Atlas, and a responsive web UI. Users can register, log in, browse products, place orders, and track order status. Staff roles (`admin`, `barista`) manage operations, while `premium` users can submit priority orders.
 
 ## Project Overview
 
-**Core features**
-- JWT authentication with secure password hashing.
-- Role-based access control (admin, barista, premium user, user).
-- Order management (create, list, update, delete) tied to the logged-in user.
-- SMTP email integration for welcome and order status updates.
-- Responsive front-end UI served from Express.
+This project includes:
+- JWT-based authentication with bcrypt password hashing
+- Role-based access control (RBAC)
+- MongoDB Atlas persistence with Mongoose models
+- Order lifecycle management (create, view, update, delete)
+- Product catalog management for admin users
+- SMTP email integration (welcome email, password reset, order status updates)
+- Responsive frontend pages served by Express
 
-**Tech stack**
-- Node.js + Express
+## Tech Stack
+
+- Node.js
+- Express
 - MongoDB Atlas + Mongoose
-- Joi validation
-- JWT + bcrypt
+- Joi (request validation)
+- JWT (`jsonwebtoken`)
+- bcrypt
 - Nodemailer (SMTP)
+- HTML/CSS/Vanilla JavaScript frontend
+
+## Repository Structure
+
+```text
+config/
+  db.js
+controllers/
+  authController.js
+  orderController.js
+  productController.js
+  userController.js
+middleware/
+  auth.js
+  errorHandler.js
+  roles.js
+  validate.js
+models/
+  Order.js
+  Product.js
+  User.js
+public/
+  *.html
+  app.js
+  css/
+  js/
+routes/
+  authRoutes.js
+  orderRoutes.js
+  productRoutes.js
+  userRoutes.js
+services/
+  emailService.js
+validators/
+  authValidators.js
+  orderValidators.js
+  productValidators.js
+  userValidators.js
+server.js
+```
 
 ## Setup Instructions
 
@@ -28,32 +73,58 @@ npm install
 
 ### 2) Configure environment variables
 
-Create a `.env` file using the template below:
-
 ```bash
 cp .env.example .env
 ```
 
-Update `.env` with your MongoDB Atlas connection string, SMTP credentials, and:
-- `APP_URL` (public base URL used in email links).
-- `PASSWORD_RESET_EXPIRES_MINUTES` (reset link lifetime, default `15`).
+Set values in `.env`:
+- `PORT` - app port (default `4000`)
+- `MONGODB_URI` - MongoDB Atlas URI (not localhost)
+- `JWT_SECRET` - JWT signing secret
+- `JWT_EXPIRES_IN` - token expiry (example: `7d`)
+- `APP_URL` - public app URL used in emails
+- `PASSWORD_RESET_EXPIRES_MINUTES` - reset token lifetime
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` - SMTP config
 
-### 3) Run the server
+### 3) Run the app
+
+Development:
 
 ```bash
 npm run dev
 ```
 
-The API will be available at `http://localhost:4000` and the UI at `http://localhost:4000`.
+Production:
+
+```bash
+npm start
+```
+
+App/UI URL: `http://localhost:4000`
+API health check: `http://localhost:4000/api/health`
+
+### 4) Optional seed scripts
+
+```bash
+npm run seed
+npm run seed:images
+```
+
+## Authentication
+
+Protected routes require:
+
+`Authorization: Bearer <JWT_TOKEN>`
 
 ## API Documentation
 
-### Authentication (Public)
+Note: Most routes are available under `/api/...` and compatibility aliases without `/api` are mounted too.
 
-**POST /register** (also available as `/api/auth/register`)
-- Register a new user with hashed password.
+### Public Auth Endpoints
 
-Request body:
+- `POST /api/auth/register`
+  - Body:
+
 ```json
 {
   "username": "coffee_lover",
@@ -63,10 +134,9 @@ Request body:
 }
 ```
 
-**POST /login** (also available as `/api/auth/login`)
-- Authenticate and return a JWT.
+- `POST /api/auth/login`
+  - Body:
 
-Request body:
 ```json
 {
   "email": "coffee@example.com",
@@ -74,20 +144,18 @@ Request body:
 }
 ```
 
-**POST /forgot-password** (also available as `/api/auth/forgot-password`)
-- Send a password reset link to the email if an account exists.
+- `POST /api/auth/forgot-password`
+  - Body:
 
-Request body:
 ```json
 {
   "email": "coffee@example.com"
 }
 ```
 
-**POST /reset-password/:token** (also available as `/api/auth/reset-password/:token`)
-- Reset password using token from email and return a new JWT.
+- `POST /api/auth/reset-password/:token`
+  - Body:
 
-Request body:
 ```json
 {
   "password": "Pass1234",
@@ -95,24 +163,28 @@ Request body:
 }
 ```
 
-### User Management (Private)
+### Private User Endpoints
 
-**GET /users/profile** (also available as `/api/users/profile`)
-- Retrieve the logged-in user's profile.
+- `GET /api/users/profile`
+- `PUT /api/users/profile`
+  - Body (at least one field):
 
-**PUT /users/profile** (also available as `/api/users/profile`)
-- Update username and/or email.
+```json
+{
+  "username": "new_name",
+  "email": "new@email.com"
+}
+```
 
-### Orders (Private)
+### Private Order Endpoints
 
-**POST /orders** (also available as `/api/orders`)
-- Create a new order for the logged-in user.
+- `POST /api/orders`
+  - Body example:
 
-Request body:
 ```json
 {
   "items": [
-    { "name": "Latte", "size": "medium", "price": 4.5, "quantity": 1 }
+    { "product": "64f0b2d26a7f4b6a9f001234", "size": "medium", "quantity": 1 }
   ],
   "notes": "Extra hot",
   "pickupTime": "2026-02-01T10:30:00.000Z",
@@ -120,85 +192,104 @@ Request body:
 }
 ```
 
-**GET /orders** (also available as `/api/orders`)
-- Retrieve all orders for the logged-in user.
-- Staff can use `?all=true` to view all orders.
+- `GET /api/orders` - own orders (or all for barista)
+- `GET /api/orders/all` - all orders (`admin`, `barista`)
+- `GET /api/orders/:id`
+- `PUT /api/orders/:id`
+- `DELETE /api/orders/:id`
 
-**GET /orders/:id** (also available as `/api/orders/:id`)
-- Retrieve a specific order by ID (owner or staff).
+### Product Endpoints
 
-**PUT /orders/:id** (also available as `/api/orders/:id`)
-- Update an order (owner can cancel, staff can update status).
+- `GET /api/products` - public
+- `GET /api/products/:id` - public
+- `POST /api/products` - admin only
+- `PUT /api/products/:id` - admin only
+- `DELETE /api/products/:id` - admin only
 
-**DELETE /orders/:id** (also available as `/api/orders/:id`)
-- Delete an order (admin only).
+## Role-Based Access Control (RBAC)
 
-## Roles & RBAC
+Roles in system:
+- `user`
+- `premium`
+- `barista`
+- `admin`
 
-- **User**: Create, view, and cancel their own orders.
-- **Premium user**: Same as user + priority orders.
-- **Moderator/Admin**: Can update status for any order, and delete orders.
+Access summary:
+- `user`: create/view own orders, cancel own pending orders
+- `premium`: `user` permissions + can set `priority` on orders
+- `barista`: view all orders and update order `status` only
+- `admin`: full order and product management
 
-## Screenshots
+## Validation and Error Handling
 
-> Stored in `docs/screenshots`. Replace these with real UI screenshots after running the app.
+- Joi validators in `validators/*`
+- Request validation middleware: `middleware/validate.js`
+- Global error handler: `middleware/errorHandler.js`
+- Typical status codes used:
+  - `400` validation or bad request
+  - `401` unauthorized/invalid token
+  - `403` forbidden
+  - `404` not found
+  - `500` internal server error
 
-- **Login & Registration**
-  ![Login screen](docs/screenshots/login.svg)
+## Frontend Pages
 
-- **Order Creation**
-  ![Order creation](docs/screenshots/orders.svg)
+Main pages:
+- `/` - Home
+- `/auth.html` - Register/Login/Forgot/Reset Password
+- `/products.html` - Product catalog
+- `/checkout.html` - Cart and order creation
+- `/dashboard.html` - Orders
+- `/account.html` - Profile management
+- `/admin.html` - Admin panel
+- `/barista.html` - Barista station
 
-- **Dashboard Overview**
-  ![Dashboard](docs/screenshots/dashboard.svg)
+## Email Integration (SMTP)
+
+Implemented in `services/emailService.js`:
+- Welcome email after registration
+- Password reset email
+- Order status update email
 
 ## Deployment
 
-You can deploy to Render, Railway, or Replit.
+You can deploy on Render, Railway, or Replit.
 
-1. Push this repository to GitHub.
-2. Create a new service on Render/Railway.
-3. Add environment variables (`MONGODB_URI`, `JWT_SECRET`, SMTP credentials).
-4. Deploy and share the live URL.
+Basic steps:
+1. Push this repo to GitHub.
+2. Create a web service.
+3. Set environment variables from `.env.example`.
+4. Deploy and verify `/api/health`.
 
-## Project Structure
+Submission fields:
+- GitHub Repository URL: `<add-your-url>`
+- Deployed App URL: `<add-your-url>`
 
-```
-config/
-  db.js
-controllers/
-  authController.js
-  orderController.js
-  userController.js
-middleware/
-  auth.js
-  errorHandler.js
-  roles.js
-  validate.js
-models/
-  Order.js
-  User.js
-public/
-  app.js
-  index.html
-  styles.css
-routes/
-  authRoutes.js
-  orderRoutes.js
-  userRoutes.js
-services/
-  emailService.js
-utils/
-  appError.js
-  asyncHandler.js
-validators/
-  authValidators.js
-  orderValidators.js
-  userValidators.js
-```
+## Screenshots
 
-## Notes for Defence
+### Home Page
+Landing page with hero section and navigation.
 
-- Explain why JWT is used for stateless auth and how bcrypt protects stored passwords.
-- Walk through RBAC decisions for order status updates.
-- Highlight MongoDB Atlas usage and environment variable security.
+![Home page](docs/screenshots/home_page.png)
+
+### Checkout
+Cart and order placement flow.
+
+![Checkout page](docs/screenshots/checkout.png)
+
+### Barista Station
+Staff-facing order queue and status updates.
+
+![Barista page](docs/screenshots/barista.png)
+
+### Additional UI View
+Additional app interface screenshot.
+
+![Additional UI](docs/screenshots/menu.png)
+
+## Notes for Defense
+
+- Explain JWT auth flow and token-protected middleware.
+- Explain why bcrypt hashing is required for password storage.
+- Explain RBAC decisions for `user`, `premium`, `barista`, and `admin`.
+- Show how MongoDB Atlas and environment variables are used securely.
