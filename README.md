@@ -287,9 +287,4 @@ Additional app interface screenshot.
 
 ![Additional UI](docs/screenshots/menu.png)
 
-## Notes for Defense
 
-- Explain JWT auth flow and token-protected middleware.
-- Explain why bcrypt hashing is required for password storage.
-- Explain RBAC decisions for `user`, `premium`, `barista`, and `admin`.
-- Show how MongoDB Atlas and environment variables are used securely.
