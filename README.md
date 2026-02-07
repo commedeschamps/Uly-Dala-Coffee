@@ -82,7 +82,7 @@ Set values in `.env`:
 - `MONGODB_URI` - MongoDB Atlas URI (not localhost)
 - `JWT_SECRET` - JWT signing secret
 - `JWT_EXPIRES_IN` - token expiry (example: `7d`)
-- `APP_URL` - public app URL used in emails
+- `APP_URL` - public app URL used in emails (production: `https://coffee-shop.commedeschamps.dev`)
 - `PASSWORD_RESET_EXPIRES_MINUTES` - reset token lifetime
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` - SMTP config
 
@@ -100,8 +100,10 @@ Production:
 npm start
 ```
 
-App/UI URL: `http://localhost:4000`
-API health check: `http://localhost:4000/api/health`
+Local App/UI URL: `http://localhost:4000`
+Local API health check: `http://localhost:4000/api/health`
+Deployed App URL: `https://coffee-shop.commedeschamps.dev`
+Deployed API health check: `https://coffee-shop.commedeschamps.dev/api/health`
 
 ### 4) Optional seed scripts
 
@@ -262,8 +264,8 @@ Basic steps:
 4. Deploy and verify `/api/health`.
 
 Submission fields:
-- GitHub Repository URL: `<add-your-url>`
-- Deployed App URL: `<add-your-url>`
+- GitHub Repository URL: `https://github.com/commedeschamps/Uly-Dala-Coffee`
+- Deployed App URL: `https://coffee-shop.commedeschamps.dev`
 
 ## Screenshots
 
@@ -286,5 +288,4 @@ Staff-facing order queue and status updates.
 Additional app interface screenshot.
 
 ![Additional UI](docs/screenshots/menu.png)
-
 

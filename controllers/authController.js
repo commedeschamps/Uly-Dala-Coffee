@@ -10,6 +10,8 @@ const createToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn });
 };
 
+const normalizeAppUrl = (value) => String(value || '').trim().replace(/\/+$/, '');
+
 const register = asyncHandler(async (req, res) => {
   const { username, email, password, role } = req.body;
   const safeRole = ['user', 'premium'].includes(role) ? role : 'user';
@@ -75,7 +77,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const resetToken = user.createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  const appUrl = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+  const appUrl =
+    normalizeAppUrl(process.env.APP_URL) || normalizeAppUrl(`${req.protocol}://${req.get('host')}`);
   const resetUrl = `${appUrl}/auth.html?mode=reset&token=${resetToken}`;
   const expiresMinutes = Number(process.env.PASSWORD_RESET_EXPIRES_MINUTES || 15);
 

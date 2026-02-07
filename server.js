@@ -39,12 +39,18 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 const port = process.env.PORT || 4000;
+const publicAppUrl = String(process.env.APP_URL || '')
+  .trim()
+  .replace(/\/+$/, '');
 
 const startServer = async () => {
   try {
     await connectDB();
     app.listen(port, () => {
       console.log(`Server running on http://localhost:${port}`);
+      if (publicAppUrl) {
+        console.log(`Public app URL: ${publicAppUrl}`);
+      }
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);

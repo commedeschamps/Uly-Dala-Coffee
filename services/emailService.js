@@ -6,7 +6,12 @@ const smtpSecure = String(process.env.SMTP_SECURE || 'false').toLowerCase() === 
 const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS;
 const smtpFrom = process.env.SMTP_FROM || (smtpUser ? `Uly Dala Coffee <${smtpUser}>` : undefined);
-const appUrl = process.env.APP_URL || 'http://localhost:4000';
+const normalizeAppUrl = (value) => String(value || '').trim().replace(/\/+$/, '');
+const defaultAppUrl =
+  process.env.NODE_ENV === 'production'
+    ? 'https://coffee-shop.commedeschamps.dev'
+    : 'http://localhost:4000';
+const appUrl = normalizeAppUrl(process.env.APP_URL) || defaultAppUrl;
 const brandName = 'Uly Dala Coffee';
 
 const isConfigured = Boolean(smtpHost && smtpUser && smtpPass && smtpFrom);
