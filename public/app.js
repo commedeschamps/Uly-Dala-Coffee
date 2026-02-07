@@ -6,7 +6,12 @@ import { bindOrderEvents, loadOrders } from './js/orders.js';
 import { loadProducts } from './js/products.js';
 import { loadAdminProducts, loadAdminOrders, bindAdminEvents } from './js/admin.js';
 import { renderCart, bindCartEvents } from './js/cart.js';
-import { bindPasswordToggle, setupGallerySlider, showToast } from './js/ui.js';
+import {
+  bindPasswordToggle,
+  setupGallerySlider,
+  showToast,
+  mountGithubStarButton,
+} from './js/ui.js';
 import { redirectTo, bindNavigationTransitions } from './js/navigation.js';
 import {
   onOrders,
@@ -48,6 +53,7 @@ const init = async () => {
   }
 
   bindPasswordToggle();
+  mountGithubStarButton();
   bindAuthEvents();
   bindOrderEvents();
   bindAdminEvents();

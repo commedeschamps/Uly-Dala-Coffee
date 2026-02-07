@@ -494,6 +494,148 @@ html:not(.auth-ready) .user-badge p:nth-child(2)::after,
   gap: 10px;
 }
 
+.github-star-link {
+  --github-rainbow: linear-gradient(
+    90deg,
+    hsl(0 100% 63%),
+    hsl(90 100% 63%),
+    hsl(210 100% 63%),
+    hsl(195 100% 63%),
+    hsl(270 100% 63%)
+  );
+  position: relative;
+  z-index: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(160deg, #f8f2ec, #f8f2ec) padding-box,
+    linear-gradient(170deg, #ffffff 58%, rgba(255, 255, 255, 0.64) 82%, rgba(0, 0, 0, 0))
+      border-box,
+    var(--github-rainbow) border-box;
+  background-size: 220% 100%;
+  box-shadow:
+    0 8px 20px rgba(44, 36, 32, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+  animation: github-rainbow-flow 5.8s linear infinite;
+}
+
+.github-star-link::before {
+  content: '';
+  position: absolute;
+  bottom: -18%;
+  left: 50%;
+  width: 64%;
+  height: 24%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--github-rainbow);
+  background-size: 220% 100%;
+  filter: blur(11px);
+  opacity: 0.52;
+  pointer-events: none;
+  z-index: -1;
+  animation: github-rainbow-flow 5.8s linear infinite;
+}
+
+.github-star-link:focus-visible {
+  outline: 2px solid rgba(58, 126, 124, 0.62);
+  outline-offset: 3px;
+}
+
+.github-star-link:hover {
+  transform: scale(1.04);
+  box-shadow:
+    0 12px 24px rgba(44, 36, 32, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.66);
+}
+
+.github-star-link:active {
+  transform: scale(0.96);
+}
+
+.github-star-link__label,
+.github-star-link__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border-radius: 10px;
+}
+
+.github-star-link__label {
+  gap: 6px;
+  padding: 0 11px;
+  color: #fff;
+  background: linear-gradient(160deg, #322921, #251f19);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.github-star-link__icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
+.github-star-link__count {
+  gap: 5px;
+  min-width: 58px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #2c2420;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.github-star-link__star {
+  width: 14px;
+  height: 14px;
+  color: #93867b;
+  fill: currentColor;
+  transition: color 0.2s ease;
+}
+
+.github-star-link:hover .github-star-link__star {
+  color: #e4b14f;
+}
+
+.github-star-link__value {
+  display: inline-block;
+  min-width: 1ch;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+}
+
+.github-star-link--footer {
+  box-shadow:
+    0 7px 16px rgba(44, 36, 32, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52);
+}
+
+.github-star-link--footer::before {
+  filter: blur(9px);
+  opacity: 0.38;
+}
+
+@keyframes github-rainbow-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
 .primary,
 .ghost,
 .btn-logout,
@@ -1031,6 +1173,16 @@ button:focus-visible {
   .footer-banner__actions .primary,
   .footer-banner__actions .ghost {
     width: 100%;
+  }
+
+  .footer-banner__actions .github-star-link {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .footer-banner__actions .github-star-link__label,
+  .footer-banner__actions .github-star-link__count {
+    flex: 1 1 0;
   }
 
   .footer-grid {

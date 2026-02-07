@@ -12,6 +12,11 @@
     flex-wrap: wrap;
   }
 
+  .nav-actions > .github-star-link {
+    flex: 1 1 auto;
+    justify-content: space-between;
+  }
+
   .brand-subtitle {
     display: none;
   }
@@ -42,6 +47,15 @@
   .nav-buttons {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .nav-actions > .github-star-link {
+    width: 100%;
+  }
+
+  .nav-actions > .github-star-link .github-star-link__label,
+  .nav-actions > .github-star-link .github-star-link__count {
+    flex: 1 1 0;
   }
 
   .user-badge {
