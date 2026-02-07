@@ -27,6 +27,83 @@
 }
 
 @media (max-width: 900px) {
+  .top-nav {
+    position: static;
+  }
+
+  .top-nav.has-mobile-nav .nav-shell {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px 12px;
+  }
+
+  .top-nav.has-mobile-nav .brand {
+    min-width: 0;
+  }
+
+  .top-nav.has-mobile-nav .nav-toggle {
+    display: inline-flex;
+    justify-self: end;
+    align-self: start;
+  }
+
+  .top-nav.has-mobile-nav .nav-links,
+  .top-nav.has-mobile-nav .nav-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .top-nav.has-mobile-nav .nav-links {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  .top-nav.has-mobile-nav .nav-link {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .top-nav.has-mobile-nav .nav-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding-top: 2px;
+  }
+
+  .top-nav.has-mobile-nav .user-badge {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+
+  .top-nav.has-mobile-nav .nav-buttons {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .top-nav.has-mobile-nav .nav-buttons .ghost,
+  .top-nav.has-mobile-nav .nav-buttons .btn-logout {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .top-nav.has-mobile-nav .nav-actions > .github-star-link {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .top-nav.has-mobile-nav:not(.is-open) .nav-links,
+  .top-nav.has-mobile-nav:not(.is-open) .nav-actions {
+    display: none;
+  }
+
+  html.mobile-nav-open {
+    overflow: hidden;
+  }
+
   .panel {
     padding: 18px;
   }

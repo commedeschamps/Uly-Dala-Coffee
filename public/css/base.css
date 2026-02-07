@@ -383,6 +383,89 @@ html.route-guard-pending .main {
   transition: opacity 0.28s ease, transform 0.28s ease, filter 0.28s ease;
 }
 
+.nav-toggle {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(58, 48, 42, 0.24);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(246, 239, 231, 0.84) 100%
+  );
+  color: var(--ink);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+  box-shadow:
+    0 8px 14px rgba(51, 40, 34, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.nav-toggle:hover {
+  transform: translateY(-1px);
+  color: var(--accent);
+  border-color: rgba(198, 118, 71, 0.42);
+  box-shadow:
+    0 12px 18px rgba(198, 118, 71, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68);
+}
+
+.nav-toggle:active {
+  transform: translateY(0);
+}
+
+.nav-toggle__bars {
+  position: relative;
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition: background-color 0.2s ease;
+}
+
+.nav-toggle__bars::before,
+.nav-toggle__bars::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition: transform 0.2s ease;
+}
+
+.nav-toggle__bars::before {
+  transform: translateY(-5px);
+}
+
+.nav-toggle__bars::after {
+  transform: translateY(5px);
+}
+
+.top-nav.has-mobile-nav.is-open .nav-toggle__bars {
+  background: transparent;
+}
+
+.top-nav.has-mobile-nav.is-open .nav-toggle__bars::before {
+  transform: translateY(0) rotate(45deg);
+}
+
+.top-nav.has-mobile-nav.is-open .nav-toggle__bars::after {
+  transform: translateY(0) rotate(-45deg);
+}
+
 html:not(.auth-ready) [data-auth="guest"],
 html:not(.auth-ready) [data-auth="admin"],
 html:not(.auth-ready) [data-auth="barista"] {
@@ -1058,6 +1141,11 @@ button:focus-visible {
 
 .footer-banner__actions .primary,
 .footer-banner__actions .ghost {
+  min-height: 52px;
+  min-width: 192px;
+}
+
+.footer-banner__actions .github-star-link {
   min-height: 52px;
   min-width: 192px;
 }

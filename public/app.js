@@ -12,7 +12,7 @@ import {
   showToast,
   mountGithubStarButton,
 } from './js/ui.js';
-import { redirectTo, bindNavigationTransitions } from './js/navigation.js';
+import { redirectTo, bindNavigationTransitions, setupMobileNavigation } from './js/navigation.js';
 import {
   onOrders,
   onProducts,
@@ -53,6 +53,7 @@ const init = async () => {
   }
 
   bindPasswordToggle();
+  setupMobileNavigation();
   mountGithubStarButton();
   bindAuthEvents();
   bindOrderEvents();
