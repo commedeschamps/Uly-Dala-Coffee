@@ -1,5 +1,7 @@
 # Uly Dala Coffee
 
+https://coffee-shop.commedeschamps.dev
+
 Uly Dala Coffee is a full-stack coffee ordering platform built with Node.js, Express, MongoDB Atlas, and a responsive web UI. Users can register, log in, browse products, place orders, and track order status. Staff roles (`admin`, `barista`) manage operations, while `premium` users can submit priority orders.
 
 ## Project Overview
@@ -288,4 +290,3 @@ Staff-facing order queue and status updates.
 Additional app interface screenshot.
 
 ![Additional UI](docs/screenshots/menu.png)
-
