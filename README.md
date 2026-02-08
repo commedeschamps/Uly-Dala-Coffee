@@ -265,10 +265,6 @@ Basic steps:
 3. Set environment variables from `.env.example`.
 4. Deploy and verify `/api/health`.
 
-Submission fields:
-- GitHub Repository URL: `https://github.com/commedeschamps/Uly-Dala-Coffee`
-- Deployed App URL: `https://coffee-shop.commedeschamps.dev`
-
 ## Screenshots
 
 ### Home Page
