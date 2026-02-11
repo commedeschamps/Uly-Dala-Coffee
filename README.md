@@ -1,5 +1,4 @@
 # Uly Dala Coffee
-
 Uly Dala Coffee is a full-stack coffee ordering platform built with Node.js, Express, MongoDB, and a responsive vanilla JS frontend.
 
 Users can register, log in, browse products, place orders, and track order status. Role-based access control is implemented for `user`, `premium`, `barista`, and `admin`.
@@ -353,7 +352,8 @@ Basic steps:
 1. Push repository to GitHub.
 2. Create web service.
 3. Set environment variables from `.env.example`.
-4. Verify `/api/health`.
+4. Deploy and verify `/api/health`.
+
 
 ## Screenshots
 
@@ -371,4 +371,4 @@ Basic steps:
 
 ### Menu
 
-![Menu](docs/screenshots/menu.png)
+
